@@ -1,5 +1,6 @@
 var fs = require('fs');
 var express = require('express');
+var http = require('http');
 var session = require('express-session');
 var path = require('path');
 var favicon = require('serve-favicon');
@@ -59,8 +60,12 @@ app.use('/search', search);
 require('./config/errorHandlers.js')(app);
 
 // launch app server
-var server = require('http').createServer(app).listen(3000);
-
+var server = http.createServer(app);
 require('./config/socket.js')(server);
+
+// サーバーをポート3000でリッスン
+server.listen(3000, function() {
+    console.log('Server listening on port 3000');
+});
 
 module.exports = app;

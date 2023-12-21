@@ -1,30 +1,31 @@
-version: "3.8"
+version: "3.9"
 services:
   mongo:
-    image: mongo:2.4.13
-    command: "--smallfiles"
+    image: mongo:5.0
     ports:
-      - 127.0.0.1:27017:27017
+      - 27017:27017
     volumes:
       - /data/db:/data/db
     restart: always
 
   elasticsearch:
-    image: elasticsearch:8.11.1
+    image: elasticsearch:7.6.2
     environment:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "path.data=/usr/share/elasticsearch/data"
     ports:
-      - 127.0.0.1:9200:9200
-      - 127.0.0.1:9300:9300
+      - 9200:9200
+      - 9300:9300
     volumes:
       - /usr/share/elasticsearch/data:/usr/share/elasticsearch/data
     restart: always
 
   chesshub:
-    build: ./chesshub
+    build:
+      context: ./chesshub
     ports:
       - 3000:3000
-    links:
-      - elasticsearch:elasticsearch
-      - mongo:mongo
+    depends_on:
+      - mongo
+      - elasticsearch
     restart: always
