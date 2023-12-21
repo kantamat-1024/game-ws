@@ -8,6 +8,9 @@ WORKDIR /var/www/app
 RUN apt-get update && apt-get install -y git
 RUN git clone $GITHUB_REPO .
 
+RUN apt-get install -y iputils-ping
+
+
 RUN npm install
 RUN npm install -g bower
 RUN bower install --allow-root
