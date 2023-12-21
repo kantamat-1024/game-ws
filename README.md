@@ -1,3 +1,5 @@
+This is my test repository. [This](https://gitter.im/benas/gamehub.io) is original repository.
+
 # About GameHub.io
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/benas/gamehub.io)
 
