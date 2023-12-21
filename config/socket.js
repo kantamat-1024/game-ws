@@ -1,54 +1,78 @@
-module.exports = function (server) {
-    // この関数は外部からserverオブジェクトを受け取ります。
+// Socket.IO v3をインポート
+const io = require('socket.io');
 
-    var io = require('socket.io').listen(server);
-    // Socket.IOモジュールを読み込み、サーバーにバインドします。
+module.exports = function(server) {
 
-    var chess =  require('chess.js');
-    // chess.jsライブラリを読み込みます。
+  // サーバーを使ってSocket.IOサーバーを作成
+  const ioServer = io(server);
 
-    /*
-     * live show of top rated game
-     */
-    var topRatedGame = new chess.Chess(); // 現在はダミーのゲーム。実際にはサーバー上でプレイされるゲームを使用するべきです。
-    var tv = io.of('/tv'); // '/tv'パスでソケット接続を作成し、トップレートゲームの動きをブロードキャストします。
+  // chess.jsをインポート
+  const chess = require('chess.js');
 
-    setInterval(function() {
-        // 3秒ごとにゲームの動きを生成し、クライアントに送信します。
-        var possibleMoves = topRatedGame.moves();
-        // 可能な動きのリストを取得します。
+  // トップレーティングゲームのチェス盤を作成
+  const topRatedGame = new chess.Chess();
 
-        // ゲームが終了している場合、新しいゲームをロードします。
-        if (topRatedGame.game_over() === true || topRatedGame.in_draw() === true || possibleMoves.length === 0) {
-            topRatedGame = new chess.Chess();
-            possibleMoves = topRatedGame.moves();
-        }
+  // トップレーティングゲーム用の名前空間
+  const tvNamespace = ioServer.of('/tv');
 
-        var move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-        topRatedGame.move(move);
-        tv.emit('new-top-rated-game-move', { fen: topRatedGame.fen(), pgn: topRatedGame.pgn(), turn: topRatedGame.turn() });
-        // 新しい動きをクライアントに送信します。
-    }, 3000);
+  // トップレーティングゲームの状態を定期的に送信
+  setInterval(() => {
 
-    tv.on('connection', function(socket){
-        // 新しいクライアントが接続したときに、現在のゲームの状態を送信します。
-        socket.emit('new-top-rated-game-move', { fen: topRatedGame.fen(), pgn: topRatedGame.pgn(), turn: topRatedGame.turn() });
+    const possibleMoves = topRatedGame.moves();
+
+    if (topRatedGame.game_over() || topRatedGame.in_draw() || possibleMoves.length === 0) {
+      topRatedGame = new chess.Chess();
+      possibleMoves = topRatedGame.moves();
+    }
+
+    const move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+    topRatedGame.move(move);
+
+    tvNamespace.emit('new-top-rated-game-move', {
+      fen: topRatedGame.fen(),
+      pgn: topRatedGame.pgn(),
+      turn: topRatedGame.turn()
     });
-    /*
-     * End of live show of top rated game
-     */
 
-    var games = {};
-    var users = 0;
-    // 現在のゲームとユーザーの数を保持するための変数です。
+  }, 3000);
 
-    /*
-     * Socket to use to broadcast monitoring events
-     */
-    var monitor = io.of('/monitor');
-    monitor.on('connection', function(socket){
-        // モニタリング用のソケット接続。現在のユーザー数とゲーム数を送信します。
-        socket.emit('update', {nbUsers: users, nbGames: Object.keys(games).length});
+  // トップレーティングゲームの名前空間の接続時に状態を送信
+  tvNamespace.on('connection', socket => {
+    socket.emit('new-top-rated-game-move', {
+      fen: topRatedGame.fen(),
+      pgn: topRatedGame.pgn(),
+      turn: topRatedGame.turn()
+    });
+  });
+
+  // ゲームとユーザー数を保持する変数
+  const games = {};
+  let users = 0;
+
+  // モニタリング用の名前空間
+  const monitorNamespace = ioServer.of('/monitor');
+
+  // モニタリング名前空間の接続時に現在の状態を送信
+  monitorNamespace.on('connection', socket => {
+    socket.emit('update', {
+      nbUsers: users,
+      nbGames: Object.keys(games).length
+    });
+  });
+
+  // メインのSocket.IOサーバーへの接続時
+  ioServer.on('connection', socket => {
+
+    // ユーザー名を取得
+    const username = socket.handshake.query.user;
+
+    // ユーザー数を更新
+    users++;
+
+    // モニタリング名前空間に現在の状態を送信
+    monitorNamespace.emit('update', {
+      nbUsers: users, 
+      nbGames: Object.keys(games).length
     });
 
     /*
