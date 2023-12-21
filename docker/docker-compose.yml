@@ -48,5 +48,5 @@ services:
     restart: always
     # コンテナが停止した場合は常に再起動します。
 volumes:
-  elasticsearch_data:
+  esdata:
     driver: local
