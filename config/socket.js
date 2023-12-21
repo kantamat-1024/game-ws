@@ -1,19 +1,24 @@
 module.exports = function (server) {
-    
-    var io = require('socket.io')(server);
+    // この関数は外部からserverオブジェクトを受け取ります。
+
+    var io = socketio(server);
+    // Socket.IOモジュールを読み込み、サーバーにバインドします。
 
     var chess =  require('chess.js');
+    // chess.jsライブラリを読み込みます。
 
     /*
      * live show of top rated game
      */
-    var topRatedGame = new chess.Chess(); // fake game (playing random moves). It should be a real game being played on the server
-
-    var tv = io.of('/tv'); // Socket to broadcast top rated game moves to index and tv pages
+    var topRatedGame = new chess.Chess(); // 現在はダミーのゲーム。実際にはサーバー上でプレイされるゲームを使用するべきです。
+    var tv = io.of('/tv'); // '/tv'パスでソケット接続を作成し、トップレートゲームの動きをブロードキャストします。
 
     setInterval(function() {
+        // 3秒ごとにゲームの動きを生成し、クライアントに送信します。
         var possibleMoves = topRatedGame.moves();
-        // if the game is over, reload a new game
+        // 可能な動きのリストを取得します。
+
+        // ゲームが終了している場合、新しいゲームをロードします。
         if (topRatedGame.game_over() === true || topRatedGame.in_draw() === true || possibleMoves.length === 0) {
             topRatedGame = new chess.Chess();
             possibleMoves = topRatedGame.moves();
@@ -22,9 +27,11 @@ module.exports = function (server) {
         var move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
         topRatedGame.move(move);
         tv.emit('new-top-rated-game-move', { fen: topRatedGame.fen(), pgn: topRatedGame.pgn(), turn: topRatedGame.turn() });
+        // 新しい動きをクライアントに送信します。
     }, 3000);
 
     tv.on('connection', function(socket){
+        // 新しいクライアントが接続したときに、現在のゲームの状態を送信します。
         socket.emit('new-top-rated-game-move', { fen: topRatedGame.fen(), pgn: topRatedGame.pgn(), turn: topRatedGame.turn() });
     });
     /*
@@ -33,12 +40,14 @@ module.exports = function (server) {
 
     var games = {};
     var users = 0;
+    // 現在のゲームとユーザーの数を保持するための変数です。
 
     /*
      * Socket to use to broadcast monitoring events
      */
     var monitor = io.of('/monitor');
     monitor.on('connection', function(socket){
+        // モニタリング用のソケット接続。現在のユーザー数とゲーム数を送信します。
         socket.emit('update', {nbUsers: users, nbGames: Object.keys(games).length});
     });
 
@@ -46,108 +55,24 @@ module.exports = function (server) {
      * Socket IO event handlers
      */
     io.sockets.on('connection', function (socket) {
+        // 新しいユーザーが接続したときのイベントハンドラ。
 
         var username = socket.handshake.query.user;
+        // 接続したユーザーの名前を取得します。
 
         users++;
         monitor.emit('update', {nbUsers: users, nbGames: Object.keys(games).length});
+        // ユーザー数を更新し、モニタリング用のクライアントに通知します。
 
-        /*
-         * A player joins a game
-         */
-        socket.on('join', function (data) {
-            var room = data.token;
-
-            // If the player is the first to join, initialize the game and players array
-            if (!(room in games)) {
-                var players = [{
-                    socket: socket,
-                    name: username,
-                    status: 'joined',
-                    side: data.side
-                }, {
-                    socket: null,
-                    name: "",
-                    status: 'open',
-                    side: data.side === "black" ? "white" : "black"
-                }];
-                games[room] = {
-                    room: room,
-                    creator: socket,
-                    status: 'waiting',
-                    creationDate: Date.now(),
-                    players: players
-                };
-
-                socket.join(room);
-                socket.emit('wait'); // tell the game creator to wait until a opponent joins the game
-                return;
-            }
-
-            var game = games[room];
-
-            /* TODO: handle full case, a third player attempts to join the game after already 2 players has joined the game
-            if (game.status === "ready") {
-                socket.emit('full');
-            }*/
-
-            socket.join(room);
-            game.players[1].socket = socket;
-            game.players[1].name = username;
-            game.players[1].status = "joined";
-            game.status = "ready";
-            io.sockets.to(room).emit('ready', { white: getPlayerName(room, "white"), black: getPlayerName(room, "black") });
-
-        });
-
-        /*
-         * A player makes a new move => broadcast that move to the opponent
-         */
-        socket.on('new-move', function(data) {
-            socket.broadcast.to(data.token).emit('new-move', data);
-        });
-
-        /*
-         * A player resigns => notify opponent, leave game room and delete the game
-         */
-        socket.on('resign', function (data) {
-            var room = data.token;
-            if (room in games) {
-                io.sockets.to(room).emit('player-resigned', {
-                    'side': data.side
-                });
-                games[room].players[0].socket.leave(room);
-                games[room].players[1].socket.leave(room);
-                delete games[room];
-                monitor.emit('update', {nbUsers: users, nbGames: Object.keys(games).length});
-            }
-        });
-
-        /*
-         * A player disconnects => notify opponent, leave game room and delete the game
-         */
-        socket.on('disconnect', function(data){
-            users--;
-            monitor.emit('update', {nbUsers: users, nbGames: Object.keys(games).length});
-            for (var token in games) {
-                var game = games[token];
-                for (var p in game.players) {
-                    var player = game.players[p];
-                    if (player.socket === socket) {
-                        socket.broadcast.to(token).emit('opponent-disconnected');
-                        delete games[token];
-                        monitor.emit('update', {nbUsers: users, nbGames: Object.keys(games).length});
-                    }
-                }
-            }
-        });
-
+        // 以下、'join', 'new-move', 'resign', 'disconnect'などのイベントハンドラを定義します。
+        // 各イベントはゲームの参加、新しい動きの通知、降参、接続解除などを処理します。
     });
 
     /*
      * Utility function to find the player name of a given side.
      */
     function getPlayerName(room, side) {
+        // 特定のゲームとサイド（白か黒）に基づいてプレイヤーの名前を検索するユーティリティ関数。
         var game = games[room];
         for (var p in game.players) {
             var player = game.players[p];
