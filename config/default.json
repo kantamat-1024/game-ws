@@ -1,9 +1,9 @@
 {
-    "chesshub": {
-        "db": "mongodb://localhost/test",
-	"es":{
-		 "host": "localhost",
-		 "port": "9200"
+  "chesshub": {
+    "db": "mongodb://mongo:27017/test",  
+    "es": {
+      "host": "elasticsearch",
+      "port": "9200"
     }
-    }
+  }
 }
