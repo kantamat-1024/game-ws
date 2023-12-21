@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 node:18.12.0
+FROM node:18.12.0
 ENV GITHUB_REPO=https://github.com/kantamat-1024/game-ws.git
 
 RUN mkdir -p /var/www/app
@@ -9,7 +9,7 @@ RUN git clone $GITHUB_REPO .
 RUN npm install
 
 ADD ./config/default.json config/default.json
-#ADD ./initData.js initData.js
+ADD ./initData.js initData.js
 
 EXPOSE 3000
 
