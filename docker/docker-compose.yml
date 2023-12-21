@@ -23,7 +23,9 @@ services:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       # ElasticsearchのJava仮想マシンのオプションを設定します。
       - "path.data=/usr/share/elasticsearch/data"
-      # データパスを設定します。
+      # データパスを設定します。  
+      - "discovery.type=single-node" 
+      - "bootstrap.system_call_filter=false"
     ports:
       - 9200:9200
       - 9300:9300
