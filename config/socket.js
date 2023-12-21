@@ -1,7 +1,7 @@
 module.exports = function (server) {
     // この関数は外部からserverオブジェクトを受け取ります。
 
-    var io = require('socket.io')(server);
+    var io = require('socket.io').listen(server);
     // Socket.IOモジュールを読み込み、サーバーにバインドします。
 
     var chess =  require('chess.js');
