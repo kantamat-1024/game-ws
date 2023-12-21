@@ -78,7 +78,7 @@ module.exports = function(server) {
     /*
      * Socket IO event handlers
      */
-    io.sockets.on('connection', function (socket) {
+    ioServer.on('connection', function (socket) {
         // 新しいユーザーが接続したときのイベントハンドラ。
 
         var username = socket.handshake.query.user;
