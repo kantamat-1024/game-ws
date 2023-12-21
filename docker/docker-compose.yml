@@ -1,35 +1,52 @@
 version: "3.9"
+# Docker Composeのファイルフォーマットバージョンを指定します。
+
 services:
+  # 複数のサービス（コンテナ）を定義します。
+
   mongo:
     image: mongo:latest
+    # MongoDBの公式イメージ（バージョン4.4）を使用します。
     ports:
-      - "27017:27017"
+      - 27017:27017
+      # ホストのポート27017をコンテナのポート27017にマッピングします。
     volumes:
       - /data/db:/data/db
+      # ホストのデータディレクトリをコンテナのデータディレクトリにマウントします。
     restart: always
+    # コンテナが停止した場合は常に再起動します。
 
   elasticsearch:
-    image: elasticsearch:6.8.6
+    image: elasticsearch:7.6.0
+    # Elasticsearchの公式イメージ（バージョン7.6.0）を使用します。
     environment:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      # ElasticsearchのJava仮想マシンのオプションを設定します。
       - "path.data=/usr/share/elasticsearch/data"
+      # データパスを設定します。
     ports:
-      - "9200:9200"
-      - "9300:9300"
+      - 9200:9200
+      - 9300:9300
+      # 必要なポートをマッピングします。
     volumes:
-      - esdata:/usr/share/elasticsearch/data
+        - esdata:/usr/share/elasticsearch/data
+      # データボリュームをマウントします。
     restart: always
+    # コンテナが停止した場合は常に再起動します。
 
   chesshub:
     build:
       context: ./chesshub
+      # チェスハブアプリケーションのDockerfileがあるディレクトリを指定します。
     ports:
-      - "3000:3000"
+      - 3000:3000
+      # ホストのポート3000をコンテナのポート3000にマッピングします。
     depends_on:
       - mongo
       - elasticsearch
+      # MongoDBとElasticsearchサービスに依存しています。
     restart: always
-
+    # コンテナが停止した場合は常に再起動します。
 volumes:
-  esdata:
+  elasticsearch_data:
     driver: local
