@@ -19,7 +19,8 @@
     "node_modules",
     "bower_components",
     "test",
-    "tests"
+    "tests",
+    "public/bower_components/"
   ],
   "dependencies": {
     "bootstrap": "3.3.5",
@@ -31,5 +32,6 @@
     "fontawesome": "4.4.0",
     "chessjs": "juangl/chessjs#0.9.0",
     "chessboardjs": "vstene/chessboardjs#0.3.2"
-  }
+  },
+  "main": ""
 }

@@ -4,10 +4,8 @@ module.exports = function (app, mongoose) {
 
     var connect = function () {
         var options = {
-            server: {
-                socketOptions: { keepAlive: 1 }
-            },
-            auto_reconnect:true
+            useNewUrlParser: true,
+            useUnifiedTopology: true
         };
         mongoose.connect(config.get('chesshub.db'), options);
     };
