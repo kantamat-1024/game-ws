@@ -20,7 +20,7 @@ services:
     image: elasticsearch:7.6.0
     # Elasticsearchの公式イメージ（バージョン7.6.0）を使用します。
     environment:
-      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
       # ElasticsearchのJava仮想マシンのオプションを設定します。
       - "path.data=/usr/share/elasticsearch/data"
       # データパスを設定します。  
