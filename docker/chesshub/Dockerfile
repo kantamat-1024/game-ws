@@ -16,7 +16,7 @@ RUN npm install -g bower
 RUN bower install --allow-root
 
 ADD ./config/default.json config/default.json
-ADD ./initData.js initData.js
+#ADD ./initData.js initData.js
 
 EXPOSE 3000
 
