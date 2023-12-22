@@ -24,7 +24,6 @@ services:
       # ElasticsearchのJava仮想マシンのオプションを設定します。
       - "path.data=/usr/share/elasticsearch/data"
       # データパスを設定します。  
-      - "discovery.type=single-node" 
       - "bootstrap.system_call_filter=false"
     ports:
       - 9200:9200
@@ -52,3 +51,7 @@ services:
 volumes:
   esdata:
     driver: local
+    driver_opts:
+      type: none
+      device: /path/to/directory
+      o: bind
