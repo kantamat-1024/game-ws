@@ -26,6 +26,7 @@ services:
       # データパスを設定します。  
       - "bootstrap.system_call_filter=false"
       - network.host=0.0.0.0
+      - discovery.type=single-node
     ports:
       - 9200:9200
       - 9300:9300
@@ -52,3 +53,10 @@ services:
       # MongoDBとElasticsearchサービスに依存しています。
     restart: always
     # コンテナが停止した場合は常に再起動します。
+volumes:
+  esdata:
+    driver: local
+    driver_opts:
+      type: none
+      device: /var/lib/elasticsearch-data
+      o: bind
