@@ -10,7 +10,7 @@ module.exports = function(server) {
   const Chess = require('chess.js');
 
   // トップレーティングゲームのチェス盤を作成
-  let topRatedGame = new Chess();
+  const topRatedGame = new chess.Chess();
 
   // トップレーティングゲーム用の名前空間
   const tvNamespace = ioServer.of('/tv');
