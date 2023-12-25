@@ -64,6 +64,8 @@ diff --git a/config/database.js b/config/database.js
 index 394a231..954cc94 100644
 --- a/config/database.js
 +++ b/config/database.js
+
+
 @@ -1,32 +1,26 @@
 -// 'config' モジュールをインポートします。これは、設定ファイルから設定を読み込むために使用されます。
  var config = require('config');
@@ -109,6 +111,8 @@ diff --git a/config/default.json b/config/default.json
 index 1085806..b0fb295 100644
 --- a/config/default.json
 +++ b/config/default.json
+
+
 @@ -1,9 +1,9 @@
  {
 -  "chesshub": {
@@ -187,6 +191,8 @@ diff --git a/config/passport.js b/config/passport.js
 index 71e80a3..2d6341e 100644
 --- a/config/passport.js
 +++ b/config/passport.js
+
+
 @@ -1,28 +1,17 @@
 -var mongoose = require('mongoose');
 -// mongooseモジュールを読み込みます。
