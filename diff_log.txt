@@ -1,0 +1,1547 @@
+diff --git a/.DS_Store b/.DS_Store
+deleted file mode 100644
+index eb4a93c..0000000
+Binary files a/.DS_Store and /dev/null differ
+diff --git a/README.md b/README.md
+index a35e983..ba73084 100644
+--- a/README.md
++++ b/README.md
+@@ -1,5 +1,3 @@
+-This is my test repository. [This](https://gitter.im/benas/gamehub.io) is original repository.
+-
+ # About GameHub.io
+ [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/benas/gamehub.io)
+ 
+diff --git a/app.js b/app.js
+index 068fa37..457a3eb 100644
+--- a/app.js
++++ b/app.js
+@@ -1,6 +1,5 @@
+ var fs = require('fs');
+ var express = require('express');
+-var http = require('http');
+ var session = require('express-session');
+ var path = require('path');
+ var favicon = require('serve-favicon');
+@@ -60,12 +59,8 @@ app.use('/search', search);
+ require('./config/errorHandlers.js')(app);
+ 
+ // launch app server
+-var server = http.createServer(app);
+-require('./config/socket.js')(server);
++var server = require('http').createServer(app).listen(3000);
+ 
+-// サーバーをポート3000でリッスン
+-server.listen(3000, function() {
+-    console.log('Server listening on port 3000');
+-});
++require('./config/socket.js')(server);
+ 
+ module.exports = app;
+diff --git a/bower.json b/bower.json
+index da84921..0211f00 100644
+--- a/bower.json
++++ b/bower.json
+@@ -19,8 +19,7 @@
+     "node_modules",
+     "bower_components",
+     "test",
+-    "tests",
+-    "public/bower_components/"
++    "tests"
+   ],
+   "dependencies": {
+     "bootstrap": "3.3.5",
+@@ -32,6 +31,5 @@
+     "fontawesome": "4.4.0",
+     "chessjs": "juangl/chessjs#0.9.0",
+     "chessboardjs": "vstene/chessboardjs#0.3.2"
+-  },
+-  "main": ""
++  }
+ }
+diff --git a/config/database.js b/config/database.js
+index 394a231..954cc94 100644
+--- a/config/database.js
++++ b/config/database.js
+@@ -1,32 +1,26 @@
+-// 'config' モジュールをインポートします。これは、設定ファイルから設定を読み込むために使用されます。
+ var config = require('config');
+ 
+-// この関数は、app（Expressアプリケーション）とmongoose（MongoDBのためのODM）を引数として受け取ります。
+ module.exports = function (app, mongoose) {
+ 
+-    // MongoDBに接続するための関数を定義します。
+     var connect = function () {
+-        // 接続オプションを定義します。`useNewUrlParser` と `useUnifiedTopology` は、接続の警告を避けるために推奨されるオプションです。
+         var options = {
+-            useNewUrlParser: true,
+-            useUnifiedTopology: true
++            server: {
++                socketOptions: { keepAlive: 1 }
++            },
++            auto_reconnect:true
+         };
+-        // mongooseを使用してMongoDBに接続します。接続情報は `config` モジュールから取得されます。
+         mongoose.connect(config.get('chesshub.db'), options);
+     };
+-    // 定義した接続関数を呼び出してMongoDBに接続を開始します。
+     connect();
+ 
+-    // データベース接続にエラーが発生した場合に実行されるエラーハンドラを定義します。
++    // Error handler
+     mongoose.connection.on('error', function (err) {
+-        // エラーをコンソールに出力します。
+         console.error('MongoDB Connection Error. Please make sure MongoDB is running. -> ' + err);
+     });
+ 
+-    // データベース接続が切断されたときに実行されるイベントハンドラを定義します。
++    // Reconnect when closed
+     mongoose.connection.on('disconnected', function () {
+-        // 切断された場合、再接続を試みるために接続関数を再度呼び出します。
+         connect();
+     });
+ 
+-};
++};
+\ No newline at end of file
+diff --git a/config/default.json b/config/default.json
+index 1085806..b0fb295 100644
+--- a/config/default.json
++++ b/config/default.json
+@@ -1,9 +1,9 @@
+ {
+-  "chesshub": {
+-    "db": "mongodb://mongo:27017/test",  
+-    "es": {
+-      "host": "elasticsearch",
+-      "port": "9200"
++    "chesshub": {
++        "db": "mongodb://localhost/test",
++	"es":{
++		 "host": "localhost",
++		 "port": "9200"
+     }
+-  }
+-}
+\ No newline at end of file
++    }
++}
+diff --git a/config/errorHandlers.js b/config/errorHandlers.js
+index f702649..6c183bc 100644
+--- a/config/errorHandlers.js
++++ b/config/errorHandlers.js
+@@ -1,31 +1,20 @@
+ module.exports = function (app) {
+-    // この関数は外部からappオブジェクトを受け取ります。
+-    
++
+     // catch 404 and forward to error handler
+     app.use(function(req, res, next) {
+-        // このミドルウェアは、リクエストが他のルートと一致しない場合（404）に動作します。
+         var err = new Error('Not Found');
+-        // 'Not Found'というメッセージを持つ新しいエラーオブジェクトを作成します。
+         err.status = 404;
+-        // エラーに404ステータスコードを設定します。
+         next(err);
+-        // 次のミドルウェアにエラーを渡します。
+     });
+ 
+     // development error handler
+     // will print stacktrace
+     if (app.get('env') === 'default') {
+-        // 環境が'default'の場合のみ、このミドルウェアが動作します。
+         app.use(function(err, req, res, next) {
+-            // エラーハンドリングミドルウェア。
+             res.status(err.status || 500);
+-            // HTTPステータスコードをエラーのステータス、または500（サーバーエラー）に設定します。
+             res.render('partials/error', {
+-                // 'partials/error'テンプレートをレンダリングします。
+                 message: err.message,
+-                // エラーメッセージをテンプレートに渡します。
+                 error: err
+-                // エラーオブジェクトをテンプレートに渡します（スタックトレースを含む）。
+             });
+         });
+     }
+@@ -33,16 +22,11 @@ module.exports = function (app) {
+     // production error handler
+     // no stacktraces leaked to user
+     app.use(function(err, req, res, next) {
+-        // 本番環境用のエラーハンドリングミドルウェア。
+         res.status(err.status || 500);
+-        // HTTPステータスコードをエラーのステータス、または500に設定します。
+         res.render('partials/error', {
+-            // 'partials/error'テンプレートをレンダリングします。
+             message: err.message,
+-            // エラーメッセージをテンプレートに渡します。
+             error: {}
+-            // ユーザーにスタックトレースを表示しないため、空のオブジェクトを渡します。
+         });
+     });
+ 
+-}
++}
+\ No newline at end of file
+diff --git a/config/passport.js b/config/passport.js
+index 71e80a3..2d6341e 100644
+--- a/config/passport.js
++++ b/config/passport.js
+@@ -1,28 +1,17 @@
+-var mongoose = require('mongoose');
+-// mongooseモジュールを読み込みます。
+-
+-var LocalStrategy = require('passport-local').Strategy;
+-// passport-localモジュールからLocalStrategyを読み込みます。
+-
+-var User = mongoose.model('User');
+-// Mongooseを使用してUserモデルを取得します。
++var mongoose         = require('mongoose');
++var LocalStrategy    = require('passport-local').Strategy;
++var User             = mongoose.model('User');
+ 
+ module.exports = function (app, passport) {
+-    // 外部からappとpassportオブジェクトを受け取る関数をエクスポートします。
+ 
+     // serialize sessions
+     passport.serializeUser(function(user, done) {
+-        // ユーザーセッションをシリアライズする方法を定義します。
+         done(null, user.id);
+-        // ユーザーIDをセッションに保存します。
+     });
+ 
+     passport.deserializeUser(function(id, done) {
+-        // セッションからユーザーをデシリアライズする方法を定義します。
+         User.findOne({ _id: id }, function (err, user) {
+-            // データベースからIDに一致するユーザーを検索します。
+-            done(err, user);
+-            // 検索結果を渡します。
++            done(err, user)
+         });
+     });
+ 
+@@ -30,32 +19,26 @@ module.exports = function (app, passport) {
+     passport.use(new LocalStrategy({
+             usernameField: 'email',
+             passwordField: 'password'
+-            // ユーザー名として'email'フィールドを、パスワードとして'password'フィールドを使用します。
+         },
+         function(email, password, done) {
+-            // ログイン試行時の挙動を定義します。
+ 
+-            User.findOne({ email: email }, function (err, user) {
+-                // データベースからメールアドレスに一致するユーザーを検索します。
++            User.findOne( { email: email } , function (err, user) {
+ 
+                 if (err) {
+                     return done(err);
+-                    // エラーがあれば処理を中断します。
+                 }
+ 
+                 if (!user) {
+                     return done(null, false, { message: 'This email is not registered' });
+-                    // ユーザーが見つからない場合はエラーメッセージを設定します。
+                 }
+ 
+                 if (!user.authenticate(password)) {
+                     return done(null, false, { message: 'Invalid login or password' });
+-                    // パスワードが一致しない場合はエラーメッセージを設定します。
+                 }
+ 
+                 return done(null, user);
+-                // ログイン成功時はユーザーオブジェクトを返します。
+             });
+         }
+     ));
+-};
++
++};
+\ No newline at end of file
+diff --git a/config/socket.js b/config/socket.js
+index 87db04f..0d582ce 100644
+--- a/config/socket.js
++++ b/config/socket.js
+@@ -1,102 +1,153 @@
+-// Socket.IO v3をインポート
+-const io = require('socket.io');
++module.exports = function (server) {
+ 
+-module.exports = function(server) {
++    var io = require('socket.io').listen(server);
+ 
+-  // サーバーを使ってSocket.IOサーバーを作成
+-  const ioServer = io(server);
++    var chess =  require('chess.js');
+ 
+-  // chess.jsをインポート
+-  const chess = require('chess.js');
+-
+-  // トップレーティングゲームのチェス盤を作成
+-  const topRatedGame = new chess.Chess();
+-
+-  // トップレーティングゲーム用の名前空間
+-  const tvNamespace = ioServer.of('/tv');
+-
+-  // トップレーティングゲームの状態を定期的に送信
+-  setInterval(() => {
+-
+-    const possibleMoves = topRatedGame.moves();
+-
+-    if (topRatedGame.game_over() || topRatedGame.in_draw() || possibleMoves.length === 0) {
+-      topRatedGame = new chess.Chess();
+-      possibleMoves = topRatedGame.moves();
+-    }
+-
+-    const move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+-    topRatedGame.move(move);
+-
+-    tvNamespace.emit('new-top-rated-game-move', {
+-      fen: topRatedGame.fen(),
+-      pgn: topRatedGame.pgn(),
+-      turn: topRatedGame.turn()
+-    });
+-
+-  }, 3000);
++    /*
++     * live show of top rated game
++     */
++    var topRatedGame = new chess.Chess(); // fake game (playing random moves). It should be a real game being played on the server
+ 
+-  // トップレーティングゲームの名前空間の接続時に状態を送信
+-  tvNamespace.on('connection', socket => {
+-    socket.emit('new-top-rated-game-move', {
+-      fen: topRatedGame.fen(),
+-      pgn: topRatedGame.pgn(),
+-      turn: topRatedGame.turn()
+-    });
+-  });
++    var tv = io.of('/tv'); // Socket to broadcast top rated game moves to index and tv pages
+ 
+-  // ゲームとユーザー数を保持する変数
+-  const games = {};
+-  let users = 0;
++    setInterval(function() {
++        var possibleMoves = topRatedGame.moves();
++        // if the game is over, reload a new game
++        if (topRatedGame.game_over() === true || topRatedGame.in_draw() === true || possibleMoves.length === 0) {
++            topRatedGame = new chess.Chess();
++            possibleMoves = topRatedGame.moves();
++        }
+ 
+-  // モニタリング用の名前空間
+-  const monitorNamespace = ioServer.of('/monitor');
++        var move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
++        topRatedGame.move(move);
++        tv.emit('new-top-rated-game-move', { fen: topRatedGame.fen(), pgn: topRatedGame.pgn(), turn: topRatedGame.turn() });
++    }, 3000);
+ 
+-  // モニタリング名前空間の接続時に現在の状態を送信
+-  monitorNamespace.on('connection', socket => {
+-    socket.emit('update', {
+-      nbUsers: users,
+-      nbGames: Object.keys(games).length
++    tv.on('connection', function(socket){
++        socket.emit('new-top-rated-game-move', { fen: topRatedGame.fen(), pgn: topRatedGame.pgn(), turn: topRatedGame.turn() });
+     });
+-  });
+-
+-  // メインのSocket.IOサーバーへの接続時
+-  ioServer.on('connection', socket => {
+-
+-    // ユーザー名を取得
+-    const username = socket.handshake.query.user;
++    /*
++     * End of live show of top rated game
++     */
+ 
+-    // ユーザー数を更新
+-    users++;
++    var games = {};
++    var users = 0;
+ 
+-    // モニタリング名前空間に現在の状態を送信
+-    monitorNamespace.emit('update', {
+-      nbUsers: users, 
+-      nbGames: Object.keys(games).length
++    /*
++     * Socket to use to broadcast monitoring events
++     */
++    var monitor = io.of('/monitor');
++    monitor.on('connection', function(socket){
++        socket.emit('update', {nbUsers: users, nbGames: Object.keys(games).length});
+     });
+ 
+     /*
+      * Socket IO event handlers
+      */
+-    ioServer.on('connection', function (socket) {
+-        // 新しいユーザーが接続したときのイベントハンドラ。
++    io.sockets.on('connection', function (socket) {
+ 
+         var username = socket.handshake.query.user;
+-        // 接続したユーザーの名前を取得します。
+ 
+         users++;
+         monitor.emit('update', {nbUsers: users, nbGames: Object.keys(games).length});
+-        // ユーザー数を更新し、モニタリング用のクライアントに通知します。
+ 
+-        // 以下、'join', 'new-move', 'resign', 'disconnect'などのイベントハンドラを定義します。
+-        // 各イベントはゲームの参加、新しい動きの通知、降参、接続解除などを処理します。
++        /*
++         * A player joins a game
++         */
++        socket.on('join', function (data) {
++            var room = data.token;
++
++            // If the player is the first to join, initialize the game and players array
++            if (!(room in games)) {
++                var players = [{
++                    socket: socket,
++                    name: username,
++                    status: 'joined',
++                    side: data.side
++                }, {
++                    socket: null,
++                    name: "",
++                    status: 'open',
++                    side: data.side === "black" ? "white" : "black"
++                }];
++                games[room] = {
++                    room: room,
++                    creator: socket,
++                    status: 'waiting',
++                    creationDate: Date.now(),
++                    players: players
++                };
++
++                socket.join(room);
++                socket.emit('wait'); // tell the game creator to wait until a opponent joins the game
++                return;
++            }
++
++            var game = games[room];
++
++            /* TODO: handle full case, a third player attempts to join the game after already 2 players has joined the game
++            if (game.status === "ready") {
++                socket.emit('full');
++            }*/
++
++            socket.join(room);
++            game.players[1].socket = socket;
++            game.players[1].name = username;
++            game.players[1].status = "joined";
++            game.status = "ready";
++            io.sockets.to(room).emit('ready', { white: getPlayerName(room, "white"), black: getPlayerName(room, "black") });
++
++        });
++
++        /*
++         * A player makes a new move => broadcast that move to the opponent
++         */
++        socket.on('new-move', function(data) {
++            socket.broadcast.to(data.token).emit('new-move', data);
++        });
++
++        /*
++         * A player resigns => notify opponent, leave game room and delete the game
++         */
++        socket.on('resign', function (data) {
++            var room = data.token;
++            if (room in games) {
++                io.sockets.to(room).emit('player-resigned', {
++                    'side': data.side
++                });
++                games[room].players[0].socket.leave(room);
++                games[room].players[1].socket.leave(room);
++                delete games[room];
++                monitor.emit('update', {nbUsers: users, nbGames: Object.keys(games).length});
++            }
++        });
++
++        /*
++         * A player disconnects => notify opponent, leave game room and delete the game
++         */
++        socket.on('disconnect', function(data){
++            users--;
++            monitor.emit('update', {nbUsers: users, nbGames: Object.keys(games).length});
++            for (var token in games) {
++                var game = games[token];
++                for (var p in game.players) {
++                    var player = game.players[p];
++                    if (player.socket === socket) {
++                        socket.broadcast.to(token).emit('opponent-disconnected');
++                        delete games[token];
++                        monitor.emit('update', {nbUsers: users, nbGames: Object.keys(games).length});
++                    }
++                }
++            }
++        });
++
+     });
+ 
+     /*
+      * Utility function to find the player name of a given side.
+      */
+     function getPlayerName(room, side) {
+-        // 特定のゲームとサイド（白か黒）に基づいてプレイヤーの名前を検索するユーティリティ関数。
+         var game = games[room];
+         for (var p in game.players) {
+             var player = game.players[p];
+@@ -105,5 +156,5 @@ module.exports = function(server) {
+             }
+         }
+     }
+-  });
+-}
++
++};
+\ No newline at end of file
+diff --git a/config/util.js b/config/util.js
+index ebdef82..bb4a63c 100644
+--- a/config/util.js
++++ b/config/util.js
+@@ -1,32 +1,21 @@
+ var crypto = require('crypto');
+-// Node.jsの標準ライブラリであるcryptoモジュールを読み込みます。
+ 
+ module.exports = {
+-    // このモジュールは2つの関数をエクスポートします。
+ 
+     encrypt: function (plainText) {
+-        // 平文を受け取り、MD5ハッシュアルゴリズムを使用して暗号化する関数。
+         return crypto.createHash('md5').update(plainText).digest('hex');
+-        // MD5ハッシュを生成し、16進数の文字列として返します。
+     },
+ 
+     randomString: function (length) {
+-        // 指定された長さのランダムな文字列を生成する関数。
+         var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghiklmnopqrstuvwxyz';
+-        // 使用する文字のセット。
+ 
+         var string = '';
+-        // 生成される文字列を初期化します。
+ 
+         for (var i = 0; i < length; i++) {
+-            // 指定された長さの文字列を生成するためにループします。
+             var randomNumber = Math.floor(Math.random() * chars.length);
+-            // ランダムなインデックスを生成します。
+             string += chars.substring(randomNumber, randomNumber + 1);
+-            // 対応する文字を文字列に追加します。
+         }
+ 
+         return string;
+-        // 完成したランダム文字列を返します。
+     }
+-};
++};
+\ No newline at end of file
+diff --git a/data/.DS_Store b/data/.DS_Store
+deleted file mode 100644
+index 15b0d74..0000000
+Binary files a/data/.DS_Store and /dev/null differ
+diff --git a/docker/.DS_Store b/docker/.DS_Store
+deleted file mode 100644
+index 418f4c2..0000000
+Binary files a/docker/.DS_Store and /dev/null differ
+diff --git a/docker/chesshub/Dockerfile b/docker/chesshub/Dockerfile
+index e2d1501..8abd201 100644
+--- a/docker/chesshub/Dockerfile
++++ b/docker/chesshub/Dockerfile
+@@ -1,23 +1,19 @@
+-FROM node:18.12.0
++FROM node:0.10.40
++MAINTAINER Hussein Galal
+ 
+-ENV GITHUB_REPO=https://github.com/kantamat-1024/game-ws.git
++ENV GITHUB_REPO=https://github.com/galal-hussein/gamehub.io.git
+ 
+ RUN mkdir -p /var/www/app
+ WORKDIR /var/www/app
+ 
+-RUN apt-get update && apt-get install -y git
+-RUN git clone $GITHUB_REPO .
+-
+-RUN apt-get install -y iputils-ping
+-
+-
+-RUN npm install
+-RUN npm install -g bower
+-RUN bower install --allow-root
++RUN apt-get update \
++&& apt-get install git \
++&& git clone $GITHUB_REPO . \
++&& npm install 
+ 
+ ADD ./config/default.json config/default.json
+ #ADD ./initData.js initData.js
+ 
+ EXPOSE 3000
+ 
+-CMD ["sh", "-c", "node initData.js && node ."]
+\ No newline at end of file
++CMD node initData.js; node .
+diff --git a/docker/chesshub/config/default.json b/docker/chesshub/config/default.json
+index e905512..46e8fb2 100644
+--- a/docker/chesshub/config/default.json
++++ b/docker/chesshub/config/default.json
+@@ -1,9 +1,9 @@
+ {
+-  "chesshub": {
+-    "db": "mongodb://mongo/test",
+-    "es": {
+-      "host": "elasticsearch",
+-      "port": "9200"
++    "chesshub": {
++        "db": "mongodb://mongo/test",
++	"es":{
++		 "host": "elasticsearch",
++		 "port": "9200"
+     }
+-  }
++}
+ }
+diff --git a/docker/docker-compose.yml b/docker/docker-compose.yml
+index bb5865f..1b83398 100644
+--- a/docker/docker-compose.yml
++++ b/docker/docker-compose.yml
+@@ -1,57 +1,25 @@
+-version: "3.9"
+-# Docker Composeのファイルフォーマットバージョンを指定します。
++mongo:
++  image: mongo:2.2.7
++  ports:
++    - 127.0.0.1:27017:27017
++  volumes:
++    - /data/db:/data/db
++  restart: always
+ 
+-services:
+-  # 複数のサービス（コンテナ）を定義します。
++elasticsearch:
++  image: elasticsearch:1.4
++  ports:
++    - 127.0.0.1:9200:9200
++    - 127.0.0.1:9300:9300
++  volumes:
++    - /usr/share/elasticsearch/data:/usr/share/elasticsearch/data
++  restart: always
+ 
+-  mongo:
+-    image: mongo:latest
+-    # MongoDBの公式イメージ（バージョン4.4）を使用します。
+-    ports:
+-      - 27017:27017
+-      # ホストのポート27017をコンテナのポート27017にマッピングします。
+-    volumes:
+-      - /data/db:/data/db
+-      # ホストのデータディレクトリをコンテナのデータディレクトリにマウントします。
+-    restart: always
+-    # コンテナが停止した場合は常に再起動します。
+-
+-  elasticsearch:
+-    image: elasticsearch:7.6.0
+-    # Elasticsearchの公式イメージ（バージョン7.6.0）を使用します。
+-    environment:
+-      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+-      # ElasticsearchのJava仮想マシンのオプションを設定します。
+-      - "path.data=/usr/share/elasticsearch/data"
+-      # データパスを設定します。  
+-      - "bootstrap.system_call_filter=false"
+-    ports:
+-      - 9200:9200
+-      - 9300:9300
+-      # 必要なポートをマッピングします。
+-    volumes:
+-        - esdata:/usr/share/elasticsearch/data
+-      # データボリュームをマウントします。
+-    restart: always
+-    # コンテナが停止した場合は常に再起動します。
+-
+-  chesshub:
+-    build:
+-      context: ./chesshub
+-      # チェスハブアプリケーションのDockerfileがあるディレクトリを指定します。
+-    ports:
+-      - 3000:3000
+-      # ホストのポート3000をコンテナのポート3000にマッピングします。
+-    depends_on:
+-      - mongo
+-      - elasticsearch
+-      # MongoDBとElasticsearchサービスに依存しています。
+-    restart: always
+-    # コンテナが停止した場合は常に再起動します。
+-volumes:
+-  esdata:
+-    driver: local
+-    driver_opts:
+-      type: none
+-      device: /path/to/directory
+-      o: bind
++chesshub:
++  build: ./chesshub
++  ports:
++    - 3000:3000
++  links:
++    - elasticsearch:elasticsearch
++    - mongo:mongo
++  restart: always
+diff --git a/initData.js b/initData.js
+index 186d716..ea5184b 100644
+--- a/initData.js
++++ b/initData.js
+@@ -1,68 +1,108 @@
+-// モジュールの読み込み
+ var fs = require('fs');
+ var mongoose = require('mongoose');
+ var config = require('config');
+ mongoose.connect(config.get('chesshub.db'));
+-// MongoDBデータベースに接続します。
++//mongoose.connect('mongodb://localhost/test');
+ 
+-// モデルの読み込み
+ fs.readdirSync(__dirname + '/models').forEach(function (file) {
+     if (~file.indexOf('.js')) require(__dirname + '/models/' + file);
+ });
+-// '/models'ディレクトリ内のすべてのJavaScriptファイルを読み込みます。
+ 
+-// ユーザー、名言、パズル、ゲームデータの定義と保存
+-var User = mongoose.model('User');
+ var Puzzle = mongoose.model('Puzzle');
++var User = mongoose.model('User');
+ var Quote = mongoose.model('Quote');
+ var Game = mongoose.model('Game');
+ 
+-// ユーザーデータの作成と保存
+-var u = new User({ /*...ユーザーデータ...*/ });
+-u.save().then(() => console.log('User saved successfully')).catch(err => console.error('Error saving user:', err));
+-
+-// 名言データの作成と保存
+-var q1 = new Quote({ /*...名言データ...*/ });
+-// 同様に他の名言データも作成
+-Promise.all([q1.save(), /*...他の名言の保存...*/])
+-    .then(() => console.log('Quotes saved successfully'))
+-    .catch(err => console.error('Error saving quotes:', err));
+-
+-// パズルデータの作成と保存
+-var p1 = new Puzzle({ /*...パズルデータ...*/ });
+-// 同様に他のパズルデータも作成
+-Promise.all([p1.save(), /*...他のパズルの保存...*/])
+-    .then(() => console.log('Puzzles saved successfully'))
+-    .catch(err => console.error('Error saving puzzles:', err));
+-
+-// ゲームデータの作成と保存
+-User.findOne({ email: 'foo@bar.org' }).then(user => {
++var u = new User({ name: 'Foo', email: 'foo@bar.org', lastConnection: 'Sun Nov 02 2014 11:16:56 GMT+0100 (CET)', password: '3858f62230ac3c915f300c664312c63f' });
++u.save(function(err) {});
++
++var q1 = new Quote({author: 'Garry Kasparov', content: 'The highest art of the chess player lies in not allowing your opponent to show you what he can do.'});
++var q2 = new Quote({author: 'Boris Spassky', content: 'The best indicator of a chess player form is his ability to sense the climax of the game.'});
++var q3 = new Quote({author: 'V. Anand', content: 'Nowadays, when you are not a grandmaster at 14, you can forget about it.'});
++var q4 = new Quote({author: 'Magnus Carlsen', content: 'Some people think that if their opponent plays a beautiful game, it’s OK to lose. I don’t. You have to be merciless.'});
++
++q1.save(function(err) {});
++q2.save(function(err) {});
++q3.save(function(err) {});
++q4.save(function(err) {});
++
++var p1 = new Puzzle({content: '1r6/4b2k/1q1pNrpp/p2Pp3/4P3/1P1R3Q/5PPP/5RK1 w', solution: '1.Qxh6+ 1…Kxh6 2.Rh3# 1…Kg8 2.Qg7#', comment: 'White to move, mate in 2'});
++var p2 = new Puzzle({content: '2q1nk1r/4Rp2/1ppp1P2/6Pp/3p1B2/3P3P/PPP1Q3/6K1 w', solution: '1.Rxe8+ Qxe8 2.Bxd6+ Qe7 3.Qxe7+ Kg8 4.Qf8+ Kh7 5.Qxf7#', comment: 'White to move, mate in 5'});
++var p3 = new Puzzle({content: '1r3r1k/5Bpp/8/8/P2qQ3/5R2/1b4PP/5K2 w', solution: '1.Qxh7+! Kxh7 2.Rh3+ Qh4 3.Rxh4#', comment: 'White to move, mate in 3'});
++
++p1.save(function(err) {});
++p2.save(function(err) {});
++p3.save(function(err) {});
++
++User.findOne({email: 'foo@bar.org'} ,function (err, user) {
+     var fooId = user.id;
+-    var g1 = new Game({ /*...ゲームデータ...*/ });
+-    // 同様に他のゲームデータも作成
+-    return Promise.all([g1.save(), /*...他のゲームの保存...*/]);
+-}).then(() => mongoose.connection.close()).catch(err => {
+-    console.error(err);
++    var g1 = new Game({
++        user: fooId,
++        white: "Foo",
++        black: "Anonymous",
++        pgn: "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. O-O Bc5 5. c3 O-O 6. d4 exd4 7. cxd4 Bb4",
++        result: "1-0"});
++
++    var g2 = new Game({
++        user: fooId,
++        white: "Foo",
++        black: "Anonymous",
++        pgn: "1. e4 c6 2. e5 d5 3. exd6 exd6 4. Nf3 Bg4 5. d4 Nf6 6. Bg5 Be7",
++        result: "1-0"});
++
++    g1.save(function(err) {});
++    g2.save(function(err) {});
++
+     mongoose.connection.close();
+ });
+ 
+-// Elasticsearchサーバーの初期設定とデータ登録
++/* Init elastic search server */
++
+ var elasticsearch = require('elasticsearch');
+ var connectionString = "http://"+config.get('chesshub.es.host')+":"+config.get('chesshub.es.port');
+-var client = new elasticsearch.Client({ host: connectionString, log: 'trace' });
+-
+-// Elasticsearchサーバーの状態確認
+-client.ping({ requestTimeout: 5000 }, function (error) {
+-    if (error) console.error('elasticsearch is down!');
+-    else console.log('elasticsearch is up and running!');
++var client = new elasticsearch.Client({
++host: connectionString,
++log: 'trace'
+ });
++client.ping({
++    requestTimeout: 5000
++}, function (error) {
++    if (error) {
++        console.error('elasticsearch is down!');
++    } else {
++        console.log('elasticsearch is up and running!');
++    }
++});
++
+ 
+-// Elasticsearchにインデックスとゲームデータを作成
+-client.indices.create({ index: 'chesshub' }, function() {
+-    client.create({ index: 'chesshub', type: 'game', id: '1', body: { /*...ゲームデータ...*/ } }, function() {
+-        // もう一つのゲームデータを登録
+-        client.create({ index: 'chesshub', type: 'game', id: '2', body: { /*...ゲームデータ...*/ } }, function() {
++client.indices.create({
++    index: 'chesshub'
++}, function() {
++    client.create({
++        index: 'chesshub',
++        type: 'game',
++        id: '1',
++        body: {
++            white: "Foo",
++            black: "Anonymous",
++            content: "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. O-O Bc5 5. c3 O-O 6. d4 exd4 7. cxd4 Bb4",
++            result: "1-0"
++        }
++    }, function(){
++        client.create({
++            index: 'chesshub',
++            type: 'game',
++            id: '2',
++            body: {
++                white: "Anonymous",
++                black: "Bar",
++                content: "1. e4 c6 2. e5 d5 3. exd6 exd6 4. Nf3 Bg4 5. d4 Nf6 6. Bg5 Be7",
++                result: "1-0"
++            }
++        }, function() {
+             client.close();
+         });
+     });
+ });
++
++
+diff --git a/models/game.js b/models/game.js
+index 9b26fa8..d425b57 100644
+--- a/models/game.js
++++ b/models/game.js
+@@ -1,22 +1,12 @@
+ var mongoose = require('mongoose')
+-// mongooseモジュール（MongoDBのためのODM）を読み込みます。
+-
+-, Schema = mongoose.Schema;
+-// mongooseからSchemaコンストラクタを参照します。
++    , Schema = mongoose.Schema;
+ 
+ var GameSchema = mongoose.Schema({
+-    // 新しいスキーマを定義します。このスキーマはゲームのデータ構造を表します。
+     user: { type: Schema.ObjectId, ref: 'User' },
+-    // userフィールドは、'User'モデルへの参照を持つObjectIdです。
+     white: String,
+-    // whiteフィールドは白い駒を使用するプレイヤーの名前を格納するための文字列型です。
+     black: String,
+-    // blackフィールドは黒い駒を使用するプレイヤーの名前を格納するための文字列型です。
+     pgn: String,
+-    // pgnフィールドは、ゲームの動きを記録するための文字列型です（Portable Game Notationの略）。
+     result: String
+-    // resultフィールドは、ゲームの結果を格納するための文字列型です。
+ });
+ 
+-mongoose.model('Game', GameSchema);
+-// 定義したスキーマを使って'Game'という名前のモデルを作成し、mongooseに登録します。
++mongoose.model('Game', GameSchema);
+\ No newline at end of file
+diff --git a/models/puzzle.js b/models/puzzle.js
+index 8aa5f54..202452a 100644
+--- a/models/puzzle.js
++++ b/models/puzzle.js
+@@ -1,15 +1,9 @@
+ var mongoose = require('mongoose');
+-// mongooseモジュールを読み込みます。mongooseはMongoDBを操作するためのNode.jsライブラリです。
+ 
+ var PuzzleSchema = mongoose.Schema({
+-    // 新しいスキーマ（PuzzleSchema）を定義します。
+     content: String,
+-    // contentフィールドは、パズルの内容を表す文字列です。
+     solution: String,
+-    // solutionフィールドは、パズルの解答を表す文字列です。
+     comment: String
+-    // commentフィールドは、パズルに対する追加的なコメントや説明を表す文字列です。
+ });
+ 
+-mongoose.model('Puzzle', PuzzleSchema);
+-// 定義したスキーマ（PuzzleSchema）を使用して、'Puzzle'という名前のモデルを作成し、mongooseに登録します。
++mongoose.model('Puzzle', PuzzleSchema);
+\ No newline at end of file
+diff --git a/models/quote.js b/models/quote.js
+index 7b23aad..29c3749 100644
+--- a/models/quote.js
++++ b/models/quote.js
+@@ -1,13 +1,8 @@
+ var mongoose = require('mongoose');
+-// mongooseモジュールを読み込みます。mongooseはMongoDBを操作するためのNode.jsライブラリです。
+ 
+ var QuoteSchema = mongoose.Schema({
+-    // 新しいスキーマ（QuoteSchema）を定義します。
+     author: String,
+-    // authorフィールドは、引用文の著者を表す文字列です。
+     content: String
+-    // contentフィールドは、引用文の内容を表す文字列です。
+ });
+ 
+-mongoose.model('Quote', QuoteSchema);
+-// 定義したスキーマ（QuoteSchema）を使用して、'Quote'という名前のモデルを作成し、mongooseに登録します。
++mongoose.model('Quote', QuoteSchema);
+\ No newline at end of file
+diff --git a/models/user.js b/models/user.js
+index 1fc110e..d5a833d 100644
+--- a/models/user.js
++++ b/models/user.js
+@@ -1,30 +1,19 @@
+ var mongoose = require('mongoose');
+-// mongooseモジュールを読み込みます。mongooseはMongoDBを操作するためのNode.jsライブラリです。
+-
+ var util = require('../config/util.js');
+-// 暗号化などのユーティリティ関数を含むutil.jsモジュールを読み込みます。
+ 
+ var UserSchema = mongoose.Schema({
+-    // 新しいスキーマ（UserSchema）を定義します。
+     name: String,
+-    // nameフィールドは、ユーザーの名前を表す文字列です。
+     email: String,
+-    // emailフィールドは、ユーザーのメールアドレスを表す文字列です。
+     password: String,
+-    // passwordフィールドは、ユーザーのパスワードを表す文字列です。
+     lastConnection: { type: Date, default: Date.now }
+-    // lastConnectionフィールドは、最後の接続日時を表す日付型で、デフォルト値は現在の日時です。
+ });
+ 
+ UserSchema.methods = {
+-    // UserSchemaにメソッドを追加します。
+ 
+     authenticate: function (plainText) {
+-        // authenticateメソッドは、平文のパスワードを受け取ります。
+         return util.encrypt(plainText) == this.password;
+-        // 与えられた平文のパスワードを暗号化し、保存されているパスワードと比較します。
+     }
++
+ };
+ 
+-mongoose.model('User', UserSchema);
+-// 定義したスキーマ（UserSchema）を使用して、'User'という名前のモデルを作成し、mongooseに登録します。
++mongoose.model('User', UserSchema);
+\ No newline at end of file
+diff --git a/package.json b/package.json
+index b0abe55..4b64714 100644
+--- a/package.json
++++ b/package.json
+@@ -7,24 +7,23 @@
+   "license": "MIT",
+   "main": "app.js",
+   "dependencies": {
+-    "body-parser": "^1.20.0",
++    "body-parser": "~1.8.1",
+     "chess.js": "^0.1.0",
+     "config": "^1.5.0",
+     "connect-flash": "^0.1.1",
+-    "cookie-parser": "^1.3.3",
+-    "debug": "^4.0.0",
+-    "express": "^4.9.0",
++    "cookie-parser": "~1.3.3",
++    "debug": "~2.0.0",
++    "elasticsearch": "^3.0.0",
++    "express": "~4.9.0",
+     "express-session": "^1.9.1",
+-    "hbs": "^4.2.0",
+-    "lodash": "^4.17.21",
++    "hbs": "~2.7.0",
++    "lodash": "^2.4.1",
+     "moment": "^2.8.3",
+-    "mongodb": "^6.0.0", 
+-    "mongoose": "^5.10.0",
+-    "morgan": "^1.3.0",
+-    "passport": "^0.7.0",
++    "mongoose": "^3.8.17",
++    "morgan": "~1.3.0",
++    "passport": "^0.2.1",
+     "passport-local": "^1.0.0",
+-    "serve-favicon": "^2.1.3",
+-    "socket.io": "^4.7.2",
+-    "elasticsearch": "^16.0.0"
++    "serve-favicon": "~2.1.3",
++    "socket.io": "^1.1.0"
+   }
+ }
+diff --git a/public/bower_components/jquery/src/data/.DS_Store b/public/bower_components/jquery/src/data/.DS_Store
+deleted file mode 100644
+index 05a1c35..0000000
+Binary files a/public/bower_components/jquery/src/data/.DS_Store and /dev/null differ
+diff --git a/routes/account.js b/routes/account.js
+index e797b10..298b8ef 100644
+--- a/routes/account.js
++++ b/routes/account.js
+@@ -1,87 +1,48 @@
+ var express = require('express');
+-// Expressフレームワークを読み込みます。
+-
+ var mongoose = require('mongoose');
+-// Mongoose（MongoDB用のODMライブラリ）を読み込みます。
+-
+ var util = require('../config/util.js');
+-// 暗号化やその他ユーティリティ関数を含むutil.jsモジュールを読み込みます。
+-
+ var router = express.Router();
+-// 新しいExpressルーターを作成します。
+-
+ var moment = require('moment');
+-// 日付操作ライブラリであるmomentを読み込みます。
+ 
+ /* GET user account details. */
+ router.get('/', function(req, res) {
+-    // ユーザーアカウントの詳細を表示するためのGETリクエストのルートを定義します。
+     res.render('partials/account', {
+-        // 'partials/account'テンプレートをレンダリングします。
+         title: 'Chess Hub - Account',
+-        // ページタイトルを設定します。
+         user: req.user,
+-        // 現在のユーザー情報を渡します。
+         isAccountPage: true,
+-        // アカウントページであることを示すフラグを設定します。
+         lastConnection: moment(req.user.lastConnection).fromNow(),
+-        // 最終接続時刻を相対的な表現で設定します。
+         updateStatus: req.flash('updateStatus'),
+-        // パスワード更新のステータスメッセージを取得します。
+         updateMessage: req.flash('updateMessage')
+-        // パスワード更新時のメッセージを取得します。
+     });
+ });
+ 
+ /* Update user account. */
+ router.post('/', function(req, res) {
+-    // ユーザーアカウントの更新を行うPOSTリクエストのルートを定義します。
+     var User = mongoose.model('User');
+-    // Userモデルを取得します。
+     var currentPassword = req.body.password;
+-    // 現在のパスワードを取得します。
+     var newPassword = req.body.newPassword;
+-    // 新しいパスワードを取得します。
+     var confirmNewPassword = req.body.confirmNewPassword;
+-    // 新しいパスワードの確認入力を取得します。
+     var hash = util.encrypt(currentPassword);
+-    // 現在のパスワードを暗号化します。
+-    if (hash === req.user.password) {
+-        // 現在のパスワードが正しい場合の処理。
+-        if (newPassword === confirmNewPassword) {
+-            // 新しいパスワードとその確認が一致する場合。
++    if ( hash === req.user.password ) {
++        if ( newPassword === confirmNewPassword ) {
+             var newPasswordHash = util.encrypt(newPassword);
+-            // 新しいパスワードを暗号化します。
+-            User.findOneAndUpdate({_id: req.user._id}, { password: newPasswordHash }, {}, function (err, user) {
+-                // パスワードを更新します。
++            User.findOneAndUpdate({_id: req.user._id}, { password: newPasswordHash }, {} ,function (err, user) {
+                 req.user = user;
+-                // 更新されたユーザー情報を設定します。
+                 req.flash('updateStatus', true);
+-                // 更新成功のステータスを設定します。
+                 req.flash('updateMessage', 'Your password has been updated successfully');
+-                // 成功メッセージを設定します。
+                 res.redirect('/account');
+-                // アカウントページにリダイレクトします。
+             });
+         } else {
+-            // 新しいパスワードとその確認が一致しない場合。
+             req.flash('updateStatus', false);
+-            // 更新失敗のステータスを設定します。
+             req.flash('updateMessage', 'The confirmation password does not match the new password');
+-            // エラーメッセージを設定します。
+             res.redirect('/account');
+-            // アカウントページにリダイレクトします。
+         }
+     } else {
+-        // 現在のパスワードが間違っている場合。
+         req.flash('updateStatus', false);
+-        // 更新失敗のステータスを設定します。
+         req.flash('updateMessage', 'The current password is incorrect');
+-        // エラーメッセージを設定します。
+         res.redirect('/account');
+-        // アカウントページにリダイレクトします。
+     }
++
+ });
+ 
+ module.exports = router;
+-// 定義したルーターをエクスポートします。
+diff --git a/routes/api.js b/routes/api.js
+index 2e3b803..18cb0d4 100644
+--- a/routes/api.js
++++ b/routes/api.js
+@@ -1,28 +1,17 @@
+ var express = require('express');
+-// Expressフレームワークを読み込みます。
+-
+ var mongoose = require('mongoose');
+-// Mongoose（MongoDB用のODMライブラリ）を読み込みます。
+-
+ var router = express.Router();
+-// 新しいExpressルーターを作成します。
+ 
+ /* display game. */
+ router.get('/game/:id', function(req, res) {
+-    // 特定のゲームを取得するためのGETリクエストのルートを定義します。
+     var id = req.params.id;
+-    // リクエストからゲームIDを取得します。
+     mongoose.model('Game').findById(id, function(err, game) {
+-        // IDに基づいてゲームを検索します。
+         if(err) {
+-            // エラーが発生した場合、500（サーバーエラー）を返します。
+             res.status(500).end();
+         }
+         if (game == null){
+-            // ゲームが見つからない場合、404（見つからない）を返します。
+             res.status(404).end();
+         } else {
+-            // ゲームが見つかった場合、ゲームの情報を返します。
+             res.send(game);
+         }
+     });
+@@ -30,20 +19,14 @@ router.get('/game/:id', function(req, res) {
+ 
+ /* display user. */
+ router.get('/user/:name', function(req, res) {
+-    // 特定のユーザーを取得するためのGETリクエストのルートを定義します。
+     var name = req.params.name;
+-    // リクエストからユーザー名を取得します。
+     mongoose.model('User').findOne({name: name}, function(err, user) {
+-        // 名前に基づいてユーザーを検索します。
+         if(err) {
+-            // エラーが発生した場合、500（サーバーエラー）を返します。
+             res.status(500).end();
+         }
+         if (user == null){
+-            // ユーザーが見つからない場合、404（見つからない）を返します。
+             res.status(404).end();
+         } else {
+-            // ユーザーが見つかった場合、ユーザーの情報を返します。
+             res.send({
+                 id: user._id,
+                 name: user.name,
+@@ -56,10 +39,7 @@ router.get('/user/:name', function(req, res) {
+ 
+ /* api status, for monitor */
+ router.get('/', function(req, res) {
+-    // APIのステータスをチェックするためのGETリクエストのルートを定義します。
+     res.status(200).end();
+-    // 正常に動作していることを示すために200（成功）を返します。
+ });
+ 
+-module.exports = router;
+-// 定義したルーターをエクスポートします。
++module.exports = router;
+\ No newline at end of file
+diff --git a/routes/index.js b/routes/index.js
+index 38ada62..ce1a7c1 100644
+--- a/routes/index.js
++++ b/routes/index.js
+@@ -1,57 +1,37 @@
+ var express = require('express');
+-// Expressフレームワークを読み込みます。
+-
+ var mongoose = require('mongoose');
+-// Mongoose（MongoDB用のODMライブラリ）を読み込みます。
+-
+ var passport = require('passport');
+-// Passport認証ミドルウェアを読み込みます。
+-
+ var util = require('../config/util.js');
+-// ユーティリティ関数を含むutil.jsモジュールを読み込みます。
+-
+ var User = mongoose.model('User');
+-// Mongooseを通じてUserモデルを取得します。
+ 
+ var router = express.Router();
+-// 新しいExpressルーターを作成します。
+ 
+ router.get('/', function(req, res) {
+-   // ホームページのルートを定義します。
+    mongoose.model('Quote').find({}, function(err, quotes) {
+-        // すべての名言をデータベースから取得します。
+         var randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+-        // ランダムに1つの名言を選択します。
+         mongoose.model('Puzzle').find({}, function(err, puzzles) {
+-            // すべてのパズルをデータベースから取得します。
+-            var randomPuzzle = puzzles[Math.floor(Math.random() * puzzles.length)];
+-            // ランダムに1つのパズルを選択します。
+-            var logoutSuccessMessage = req.flash('logoutSuccess');
+-            var welcomeMessage = req.flash('welcomeMessage');
+-            var registerSuccessMessage = req.flash('registerSuccessMessage');
+-            // フラッシュメッセージを取得します。
+-            res.render('partials/index', {
+-                // indexテンプレートをレンダリングします。
+-                title: 'Chess Hub',
+-                quote: randomQuote,
+-                puzzle: randomPuzzle,
+-                logoutSuccessMessage: logoutSuccessMessage,
+-                welcomeMessage: welcomeMessage,
+-                registerSuccessMessage: registerSuccessMessage,
+-                user: req.user,
+-                isHomePage: true
+-            });
+-        });
++           var randomPuzzle = puzzles[Math.floor(Math.random() * puzzles.length)];
++           var logoutSuccessMessage = req.flash('logoutSuccess');
++           var welcomeMessage = req.flash('welcomeMessage');
++           var registerSuccessMessage = req.flash('registerSuccessMessage');
++           res.render('partials/index', {
++               title: 'Chess Hub',
++               quote: randomQuote,
++               puzzle: randomPuzzle,
++               logoutSuccessMessage: logoutSuccessMessage,
++               welcomeMessage: welcomeMessage,
++               registerSuccessMessage: registerSuccessMessage,
++               user: req.user,
++               isHomePage: true
++           });
++       });
+     });
+ });
+ 
+ router.get('/game/:token/:side', function(req, res) {
+-    // 特定のゲームを表示するルートを定義します。
+     var token = req.params.token;
+     var side = req.params.side;
+-    // URLからゲームトークンとプレイヤーのサイドを取得します。
+     res.render('partials/game', {
+-        // gameテンプレートをレンダリングします。
+         title: 'Chess Hub - Game ' + token,
+         user: req.user,
+         isPlayPage: true,
+@@ -61,19 +41,13 @@ router.get('/game/:token/:side', function(req, res) {
+ });
+ 
+ router.get('/logout', function(req, res) {
+-    // ログアウト処理のルートを定義します。
+     req.logout();
+-    // Passportを使用してユーザーをログアウトします。
+     req.flash('logoutSuccess', 'You have been successfully logged out');
+-    // ログアウト成功のメッセージをフラッシュに設定します。
+     res.redirect('/');
+-    // ホームページにリダイレクトします。
+ });
+ 
+ router.get('/tv', function(req, res) {
+-    // TVページのルートを定義します。
+     res.render('partials/tv', {
+-        // tvテンプレートをレンダリングします。
+         title: 'Chess Hub - Tv',
+         user: req.user,
+         isTvPage: true,
+@@ -83,15 +57,17 @@ router.get('/tv', function(req, res) {
+ });
+ 
+ router.get('/monitor', function(req, res) {
+-    // システムのモニタリングページのルートを定義します。
+-    // todo: ここでMongoDB、Elasticsearch、APIのステータスをチェックする処理を実装します。
+ 
++    /*todo : ping services (mongo, elasticsearch and api) and populate status
++    http.get("http://localhost:3000/api", function(res) {
++        var apiStatus = res.statusCode === 200;
++        var mongoStatus = mongoose.connection.modelNames().length === 0;
++        // render monitor page
++    })*/
+     var mongoStatus = "success", mongoIcon = "smile";
+     var apiStatus = "success", apiIcon = "smile";
+     var esStatus = "success", esIcon = "smile";
+-    // 現時点では、すべてのサービスのステータスを「成功」としています。
+     res.render('partials/monitor', {
+-        // monitorテンプレートをレンダリングします。
+         title: 'Chess Hub - Monitor',
+         user: req.user,
+         status: {
+@@ -108,4 +84,3 @@ router.get('/monitor', function(req, res) {
+ });
+ 
+ module.exports = router;
+-// 定義したルーターをエクスポートします。
+diff --git a/routes/login.js b/routes/login.js
+index 02da3d8..3854432 100644
+--- a/routes/login.js
++++ b/routes/login.js
+@@ -1,50 +1,31 @@
+ var express = require('express');
+-// Expressフレームワークを読み込みます。
+-
+ var mongoose = require('mongoose');
+-// Mongoose（MongoDB用のODMライブラリ）を読み込みます。
+-
+ var passport = require('passport');
+-// Passport認証ミドルウェアを読み込みます。
+-
+ var User = mongoose.model('User');
+-// Mongooseを通じてUserモデルを取得します。
+ 
+ var router = express.Router();
+-// 新しいExpressルーターを作成します。
+ 
+ router.get('/', function(req, res) {
+-    // ログインページのGETリクエストのルートを定義します。
+     var errors = req.flash('error');
+-    // エラーメッセージをフラッシュから取得します。
+     var error = '';
+     if (errors.length) {
+         error = errors[0];
+-        // 最初のエラーメッセージを取得します。
+     }
+ 
+     res.render('partials/login', {
+-        // loginテンプレートをレンダリングします。
+         title: 'Chess Hub - Login',
+         error: error,
+         isLoginPage: true
+-        // レンダリングに必要な変数を設定します。
+     });
+ });
+ 
+ router.post('/',
+-    passport.authenticate('local', { failureRedirect: '/login', failureFlash: true }),
+-    // ログインフォームのPOSTリクエストを処理し、Passportで認証します。
++    passport.authenticate('local',{ failureRedirect: '/login', failureFlash: true }),
+     function(req, res) {
+-        // 認証に成功した後の処理。
+-        User.findOneAndUpdate({_id: req.user._id}, { lastConnection: new Date() }, {}, function (err, user) {
+-            // ユーザーの最終接続日時を更新します。
++        User.findOneAndUpdate({_id: req.user._id}, { lastConnection: new Date() }, {} ,function (err, user) {
+             req.flash('welcomeMessage', 'Welcome ' + user.name + '!');
+-            // 歓迎メッセージをフラッシュに設定します。
+             res.redirect('/');
+-            // ホームページにリダイレクトします。
+         });
+     });
+ 
+ module.exports = router;
+-// 定義したルーターをエクスポートします。
+diff --git a/routes/play.js b/routes/play.js
+index 0bd3376..93c4471 100644
+--- a/routes/play.js
++++ b/routes/play.js
+@@ -1,33 +1,20 @@
+ var express = require('express');
+-// Expressフレームワークを読み込みます。
+-
+ var util = require('../config/util.js');
+-// 暗号化やその他ユーティリティ関数を含むutil.jsモジュールを読み込みます。
+-
+ var router = express.Router();
+-// 新しいExpressルーターを作成します。
+ 
+ router.get('/', function(req, res) {
+-    // 「ゲームをプレイする」ページのGETリクエストのルートを定義します。
+     res.render('partials/play', {
+-        // playテンプレートをレンダリングします。
+         title: 'Chess Hub - Game',
+         user: req.user,
+         isPlayPage: true
+-        // レンダリングに必要な変数を設定します。
+     });
+ });
+ 
+ router.post('/', function(req, res) {
+-    // 新しいゲームセッションを開始するPOSTリクエストのルートを定義します。
+     var side = req.body.side;
+-    // リクエストからユーザーが選択したサイド（白または黒）を取得します。
+-    // var opponent = req.body.opponent; // AIとの対戦は未実装です。
++    //var opponent = req.body.opponent; // playing against the machine in not implemented
+     var token = util.randomString(20);
+-    // 20文字のランダムなトークンを生成します。
+     res.redirect('/game/' + token + '/' + side);
+-    // 生成したトークンとユーザーが選択したサイドを含むURLにリダイレクトします。
+ });
+ 
+-module.exports = router;
+-// 定義したルーターをエクスポートします。
++module.exports = router;
+\ No newline at end of file
+diff --git a/routes/register.js b/routes/register.js
+index 6fa189b..fa99faa 100644
+--- a/routes/register.js
++++ b/routes/register.js
+@@ -1,88 +1,60 @@
+ var express = require('express');
+-// Expressフレームワークを読み込みます。
+-
+ var mongoose = require('mongoose');
+-// Mongoose（MongoDB用のODMライブラリ）を読み込みます。
+-
+ var passport = require('passport');
+-// Passport認証ミドルウェアを読み込みます。
+-
+ var util = require('../config/util.js');
+-// 暗号化やその他ユーティリティ関数を含むutil.jsモジュールを読み込みます。
+-
+ var User = mongoose.model('User');
+-// Mongooseを通じてUserモデルを取得します。
+ 
+ var router = express.Router();
+-// 新しいExpressルーターを作成します。
+ 
+ router.get('/', function(req, res) {
+-    // ユーザー登録ページのGETリクエストのルートを定義します。
+     var errors = req.flash('error');
+-    // エラーメッセージをフラッシュから取得します。
+     var error = '';
+     if (errors.length) {
+         error = errors[0];
+-        // 最初のエラーメッセージを取得します。
+     }
+ 
+     res.render('partials/register', {
+-        // registerテンプレートをレンダリングします。
+         title: 'Chess Hub - Register',
+         error: error,
+         isLoginPage: true
+-        // レンダリングに必要な変数を設定します。
+     });
+ });
+ 
+ router.post('/', function(req, res, next) {
+-    // ユーザー登録フォームのPOSTリクエストのルートを定義します。
++
+     var email = req.body.email;
+     var name = req.body.userName;
+     var password = req.body.password;
+     var confirmPassword = req.body.confirmPassword;
+-    // フォームから情報を取得します。
+ 
+-    User.findOne({email: email}, function (err, user) {
+-        // メールアドレスに基づいてユーザーを検索します。
++    User.findOne({email: email} ,function (err, user) {
+         if (user !== null) {
+-            // ユーザーが既に存在する場合。
+             req.flash('registerStatus', false);
+             req.flash('error', 'We have already an account with email: ' + email);
+             res.redirect('/register');
+         } else { // no user found
+-            // ユーザーが存在しない場合。
+             if(password === confirmPassword) {
+-                // パスワードが一致する場合。
+                 var u = new User({ name: name, email: email, password: util.encrypt(password) });
+-                // 新しいユーザーオブジェクトを作成し、パスワードを暗号化します。
+                 u.save(function (err) {
+-                    // ユーザーをデータベースに保存します。
+                     if (err) {
+                         next(err);
+-                        // エラーが発生した場合、エラー処理を行います。
+                     } else {
+                         console.log('new user:' + u);
+                         req.login(u, function(err) {
+-                            // ユーザーをログインさせます。
+                             if (err) { return next(err); }
+                             req.flash('registerStatus', true);
+                             req.flash('registerSuccessMessage', 'Welcome ' + u.name + "!");
+                             return res.redirect('/');
+-                            // 登録成功のメッセージを設定し、ホームページにリダイレクトします。
+                         });
+                     }
+                 });
+             } else {
+-                // パスワードが一致しない場合。
+                 req.flash('registerStatus', false);
+                 req.flash('error', 'The confirmation password does not match the password');
+                 res.redirect('/register');
+-                // エラーメッセージを設定し、登録ページにリダイレクトします。
+             }
+         }
+     });
+ });
+ 
+ module.exports = router;
+-// 定義したルーターをエクスポートします。
+diff --git a/routes/search.js b/routes/search.js
+index 12a4e37..7560d4c 100644
+--- a/routes/search.js
++++ b/routes/search.js
+@@ -1,36 +1,24 @@
+ var express = require('express');
+-// Expressフレームワークを読み込みます。
+-
+ var elasticsearch = require('elasticsearch');
+-// Elasticsearchクライアントライブラリを読み込みます。
+-
+ var client = new elasticsearch.Client(); // default to localhost:9200
+-// Elasticsearchクライアントを初期化します。デフォルトの設定では、localhostのポート9200に接続します。
+ 
+ var router = express.Router();
+-// 新しいExpressルーターを作成します。
+ 
+ router.get('/', function(req, res) {
+-    // 検索ページのGETリクエストのルートを定義します。
+     res.render('partials/search', {
+-        // searchテンプレートをレンダリングします。
+         title: 'Chess Hub - Search',
+         user: req.user,
+         isSearchPage: true
+-        // レンダリングに必要な変数を設定します。
+     });
+ });
+ 
+ router.post('/', function(req, res) {
+-    // 検索フォームのPOSTリクエストのルートを定義します。
+     var white = req.body.white;
+     var black = req.body.black;
+     var content = req.body.content;
+     var result = req.body.result;
+-    // リクエストから検索パラメータを取得します。
+ 
+     client.search({
+-        // Elasticsearchクライアントを使って検索を実行します。
+         index: 'chesshub',
+         type: 'game',
+         body: {
+@@ -42,27 +30,18 @@ router.post('/', function(req, res) {
+                         { "match": { "content": content }},
+                         { "match": { "result": result }}
+                     ]
+-                    // 検索クエリを定義します。white, black, content, resultフィールドでのマッチングを行います。
+                 }
+             }
+         }
+     }).then(function (resp) {
+             var games = resp.hits.hits;
+-            // 検索結果を取得します。
+             res.set('Content-Type', 'application/json');
+-            // 応答のContent-TypeをJSONに設定します。
+             res.status(200);
+-            // HTTPステータスコード200（OK）を設定します。
+             res.send({ games: games });
+-            // 検索結果をJSON形式で送信します。
+         }, function (err) {
+-            // 検索中にエラーが発生した場合。
+             res.status(500);
+-            // HTTPステータスコード500（サーバーエラー）を設定します。
+             console.log(err);
+-            // エラーをログに出力します。
+         });
+ });
+ 
+ module.exports = router;
+-// 定義したルーターをエクスポートします。

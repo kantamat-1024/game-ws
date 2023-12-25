@@ -53,5 +53,5 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: /path/to/directory
+      device: /var/lib/elasticsearch-data
       o: bind
