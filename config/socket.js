@@ -7,7 +7,7 @@ module.exports = function(server) {
   const ioServer = io(server);
 
   // chess.jsをインポート
-  const Chess = require('chess.js');
+  const chess = require('chess.js');
 
   // トップレーティングゲームのチェス盤を作成
   const topRatedGame = new chess.Chess();
@@ -18,7 +18,7 @@ module.exports = function(server) {
   // トップレーティングゲームの状態を定期的に送信
   setInterval(() => {
 
-    let possibleMoves = topRatedGame.moves();
+    var possibleMoves = topRatedGame.moves();
 
     if (topRatedGame.game_over() || topRatedGame.in_draw() || possibleMoves.length === 0) {
       topRatedGame = new Chess();
