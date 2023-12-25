@@ -66,17 +66,17 @@ User.findOne({ email: 'foo@bar.org' }).then(user => {
 });
 
 // Elasticsearchサーバーの初期設定とデータ登録
-var connectionString = "http://" + config.get('chesshub.es.host') + ":" + config.get('chesshub.es.port');
+var elasticsearch = require('elasticsearch');
+var connectionString = "http://"+config.get('chesshub.es.host')+":"+config.get('chesshub.es.port');
 var client = new elasticsearch.Client({ host: connectionString, log: 'trace' });
 
+// Elasticsearchサーバーの状態確認
 client.ping({ requestTimeout: 5000 }, function (error) {
-    if (error) {
-        console.error('elasticsearch is down!');
-    } else {
-        console.log('elasticsearch is up and running!');
-    }
+    if (error) console.error('elasticsearch is down!');
+    else console.log('elasticsearch is up and running!');
 });
 
+// Elasticsearchにインデックスとゲームデータを作成
 client.indices.create({ index: 'chesshub' }, function() {
     client.create({
         index: 'chesshub',
