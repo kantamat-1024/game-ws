@@ -7,10 +7,10 @@ module.exports = function(server) {
   const ioServer = io(server);
 
   // chess.jsをインポート
-  const chess = require('chess.js');
+  const Chess = require('chess.js');
 
   // トップレーティングゲームのチェス盤を作成
-  const topRatedGame = new chess.Chess();
+  let topRatedGame = new Chess();
 
   // トップレーティングゲーム用の名前空間
   const tvNamespace = ioServer.of('/tv');
@@ -18,10 +18,10 @@ module.exports = function(server) {
   // トップレーティングゲームの状態を定期的に送信
   setInterval(() => {
 
-    const possibleMoves = topRatedGame.moves();
+    let possibleMoves = topRatedGame.moves();
 
     if (topRatedGame.game_over() || topRatedGame.in_draw() || possibleMoves.length === 0) {
-      topRatedGame = new chess.Chess();
+      topRatedGame = new Chess();
       possibleMoves = topRatedGame.moves();
     }
 
@@ -74,6 +74,11 @@ module.exports = function(server) {
       nbUsers: users, 
       nbGames: Object.keys(games).length
     });
+
+    // その他のイベントハンドラーをここに記述...
+  });
+};
+
 
     /*
      * Socket IO event handlers
