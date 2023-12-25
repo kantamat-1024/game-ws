@@ -26,13 +26,12 @@ services:
       # データパスを設定します。  
       - "bootstrap.system_call_filter=false"
       - network.host=0.0.0.0
-
     ports:
       - 9200:9200
       - 9300:9300
       # 必要なポートをマッピングします。
     volumes:
-        - esdata:/usr/share/elasticsearch/data
+      - /usr/share/elasticsearch/data:/usr/share/elasticsearch/data
       # データボリュームをマウントします。
     restart: always
     # コンテナが停止した場合は常に再起動します。
@@ -44,16 +43,12 @@ services:
     ports:
       - 3000:3000
       # ホストのポート3000をコンテナのポート3000にマッピングします。
+    links:
+      - elasticsearch:elasticsearch
+      - mongo:mongo
     depends_on:
       - mongo
       - elasticsearch
       # MongoDBとElasticsearchサービスに依存しています。
     restart: always
     # コンテナが停止した場合は常に再起動します。
-volumes:
-  esdata:
-    driver: local
-    driver_opts:
-      type: none
-      device: /var/lib/elasticsearch-data
-      o: bind
