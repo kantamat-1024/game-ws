@@ -20,11 +20,13 @@ services:
     image: elasticsearch:7.6.0
     # Elasticsearchの公式イメージ（バージョン7.6.0）を使用します。
     environment:
-      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       # ElasticsearchのJava仮想マシンのオプションを設定します。
       - "path.data=/usr/share/elasticsearch/data"
       # データパスを設定します。  
       - "bootstrap.system_call_filter=false"
+      - network.host=0.0.0.0
+
     ports:
       - 9200:9200
       - 9300:9300

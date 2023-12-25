@@ -110,7 +110,7 @@ index 394a231..954cc94 100644
 diff --git a/config/default.json b/config/default.json
 index 1085806..b0fb295 100644
 --- a/config/default.json
-+++ b/config/default.json
++++ b/config/
 
 
 @@ -1,9 +1,9 @@
