@@ -75,11 +75,6 @@ module.exports = function(server) {
       nbGames: Object.keys(games).length
     });
 
-    // その他のイベントハンドラーをここに記述...
-  });
-};
-
-
     /*
      * Socket IO event handlers
      */
