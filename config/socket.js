@@ -83,7 +83,7 @@ module.exports = function(server) {
 
       // ゲームがまだない場合は初期化
       if (!games[room]) {
-
+        
         var players = [
           {
             socket: socket,

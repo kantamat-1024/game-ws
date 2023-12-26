@@ -61,7 +61,16 @@ require('./config/errorHandlers.js')(app);
 
 // launch app server
 var server = http.createServer(app);
-require('./config/socket.js')(server);
+
+// ここでsocket.ioの設定を追加
+const io = require('socket.io');
+const socket = require('./config/socket.js'); // socket.jsをインポート
+
+// サーバーにsocket.ioを設定
+const ioServer = io(server);
+
+// socket.jsの設定関数を呼び出す  
+socket(ioServer);
 
 // サーバーをポート3000でリッスン
 server.listen(3000, function() {
