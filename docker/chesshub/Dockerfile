@@ -18,4 +18,4 @@ ADD ./config/default.json config/default.json
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "node initData.js && node ."]
+CMD ["sh", "-c", "node initData.js && DEBUG=socket.io* node ."]
