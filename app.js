@@ -60,17 +60,12 @@ app.use('/search', search);
 require('./config/errorHandlers.js')(app);
 
 // HTTPサーバーを作成
-const server = require('http').Server(app);
+var server = http.createServer(app);
+require('./config/socket.js')(server);
 
-// Socket.IOをインポートし、HTTPサーバーにバインド
-const io = require('socket.io')(server);
-
-// socket.jsモジュールをインポートし、Socket.IOインスタンスを渡す
-require('./config/socket.js')(io);
-
-// サーバーを起動
+// サーバーをポート3000でリッスン
 server.listen(3000, function() {
-  console.log('Server listening on port 3000');
+    console.log('Server listening on port 3000');
 });
 
 module.exports = app;

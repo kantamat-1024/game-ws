@@ -77,34 +77,30 @@ module.exports = function(server) {
 
    // ゲーム参加時
    socket.on('join', function(data) {
-
      // ゲームルーム名
      const room = data.token;
 
      // ゲームがまだない場合は初期化
      if (!games[room]) {
-       
-       var players = [
-         {
-           socket: socket,
-           name: username,
-           status: 'joined',
-           side: data.side
-         },
-         {
-           socket: null,
-           name: "",
-           status: 'open',
-           side: data.side === "black" ? "white" : "black"
-         }
-       ];
-
        games[room] = {
          room: room,
          creator: socket,
          status: 'waiting',
          creationDate: Date.now(),
-         players: players
+         players: [
+           {
+             socket: socket,
+             name: username,
+             status: 'joined',
+             side: data.side
+           },
+           {
+             socket: null,
+             name: "",
+             status: 'open',
+             side: data.side === "black" ? "white" : "black"
+           }
+         ]
        };
 
        socket.join(room);
@@ -113,17 +109,16 @@ module.exports = function(server) {
      }
 
      // 2人目のプレイヤーが参加
-     var game = games[room];
-     socket.join(room);
-     game.players[1].socket = socket;
-     game.players[1].name = username;
-     game.players[1].status = "joined";
-     game.status = "ready";
-     io.sockets.to(room).emit('ready', {
-       white: getPlayerName(room, "white"),
-       black: getPlayerName(room, "black")
-     });
+     games[room].players[1].socket = socket;
+     games[room].players[1].name = username;
+     games[room].players[1].status = 'joined';
+     games[room].status = 'ready';
 
+     socket.join(room);
+     io.sockets.to(room).emit('ready', {
+       white: getPlayerName(room, 'white'),
+       black: getPlayerName(room, 'black')  
+     });
    });
 
    // 新しい手の通知
@@ -139,7 +134,7 @@ module.exports = function(server) {
          side: data.side
        });
        delete games[room];
-       
+
        games[room].players[0].socket.leave(room);
        games[room].players[1].socket.leave(room);
 
@@ -151,21 +146,17 @@ module.exports = function(server) {
    });
 
    // 切断時
-   socket.on('disconnect', function(data) {
+   socket.on('disconnect', function() {
      users--;
-     monitorNamespace.emit('update', {
-       nbUsers: users, 
-       nbGames: Object.keys(games).length
-     });
-     
-     for (var token in games) {
-       var game = games[token];
-       for (var p in game.players) {
-         var player = game.players[p];
+
+     for (let token in games) {
+       const game = games[token];
+       for (let p in game.players) {
+         const player = game.players[p];
          if (player.socket === socket) {
            socket.broadcast.to(token).emit('opponent-disconnected');
            delete games[token];
-           
+
            monitorNamespace.emit('update', {
              nbUsers: users,
              nbGames: Object.keys(games).length
@@ -178,14 +169,14 @@ module.exports = function(server) {
  });
 
  // プレイヤー名を取得
- function getPlayerName(room, side) {
-   var game = games[room];
-   for (var p in game.players) {
-     var player = game.players[p];
+ const getPlayerName = (room, side) => {
+   const game = games[room];
+   for (let p in game.players) {
+     const player = game.players[p];
      if (player.side === side) {
        return player.name;
      }
    }
  }
 
-};
+}
