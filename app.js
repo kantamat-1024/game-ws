@@ -59,22 +59,18 @@ app.use('/search', search);
 // configure error handlers
 require('./config/errorHandlers.js')(app);
 
-// launch app server
-var server = http.createServer(app);
+// HTTPサーバーを作成
+const server = require('http').Server(app);
 
-// ここでsocket.ioの設定を追加
-const io = require('socket.io');
-const socket = require('./config/socket.js'); // socket.jsをインポート
+// Socket.IOをインポートし、HTTPサーバーにバインド
+const io = require('socket.io')(server);
 
-// サーバーにsocket.ioを設定
-const ioServer = io(server);
+// socket.jsモジュールをインポートし、Socket.IOインスタンスを渡す
+require('./config/socket.js')(io);
 
-// socket.jsの設定関数を呼び出す  
-socket(ioServer);
-
-// サーバーをポート3000でリッスン
+// サーバーを起動
 server.listen(3000, function() {
-    console.log('Server listening on port 3000');
+  console.log('Server listening on port 3000');
 });
 
 module.exports = app;
