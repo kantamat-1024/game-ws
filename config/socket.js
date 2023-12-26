@@ -102,23 +102,26 @@ module.exports = function(server) {
            }
          ]
        };
+       games[room] = {
+        room: room,
+        creator: socket,
+        status: 'waiting',
+        creationDate: Date.now(),
+        players: players
+      };
 
        socket.join(room);
        socket.emit('wait');
        return;
      }
-
-     // 2人目のプレイヤーが参加
-     games[room].players[1].socket = socket;
-     games[room].players[1].name = username;
-     games[room].players[1].status = 'joined';
-     games[room].status = 'ready';
-
-     socket.join(room);
-     io.sockets.to(room).emit('ready', {
-       white: getPlayerName(room, 'white'),
-       black: getPlayerName(room, 'black')  
-     });
+    // 2人目のプレイヤーが参加
+    var game = games[room];
+    socket.join(room);
+    game.players[1].socket = socket;
+    game.players[1].name = username;
+    game.players[1].status = "joined";
+    game.status = "ready";
+    io.sockets.to(room).emit('ready', { white: getPlayerName(room, "white"), black: getPlayerName(room, "black") });
    });
 
    // 新しい手の通知
@@ -132,11 +135,10 @@ module.exports = function(server) {
      if (room in games) {
        io.sockets.to(room).emit('player-resigned', {
          side: data.side
-       });
-       delete games[room];
-       
+       });       
        games[room].players[0].socket.leave(room);
        games[room].players[1].socket.leave(room);
+       delete games[room];
 
        monitorNamespace.emit('update', {
          nbUsers: users,
@@ -146,26 +148,21 @@ module.exports = function(server) {
    });
 
    // 切断時
-   socket.on('disconnect', function() {
-     users--;
-
-     for (let token in games) {
-       const game = games[token];
-       for (let p in game.players) {
-         const player = game.players[p];
-         if (player.socket === socket) {
-           socket.broadcast.to(token).emit('opponent-disconnected');
-           delete games[token];
-
-           monitorNamespace.emit('update', {
-             nbUsers: users,
-             nbGames: Object.keys(games).length
-           });
-         }
-       }
-     }
-   });
-
+   socket.on('disconnect', function(data){
+    users--;
+    monitorNamespace.emit('update', {nbUsers: users, nbGames: Object.keys(games).length});
+    for (var token in games) {
+        var game = games[token];
+        for (var p in game.players) {
+            var player = game.players[p];
+            if (player.socket === socket) {
+                socket.broadcast.to(token).emit('opponent-disconnected');
+                delete games[token];
+                monitorNamespace.emit('update', {nbUsers: users, nbGames: Object.keys(games).length});
+            }
+        }
+    }
+  });
  });
 
  // プレイヤー名を取得

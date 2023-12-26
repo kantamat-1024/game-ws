@@ -32,8 +32,14 @@ services:
       - 9300:9300
       # 必要なポートをマッピングします。
     volumes:
-      - /usr/share/elasticsearch/data:/usr/share/elasticsearch/data
+      - esdata:/usr/share/elasticsearch/data
       # データボリュームをマウントします。
+    command:
+      - bash
+      - -c
+      - |
+        chown -R elasticsearch:elasticsearch /usr/share/elasticsearch/data
+        exec docker-entrypoint.sh elasticsearch
     restart: always
     # コンテナが停止した場合は常に再起動します。
 
