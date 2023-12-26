@@ -115,9 +115,9 @@ module.exports = function(server) {
      games[room].status = 'ready';
 
      socket.join(room);
-     io.sockets.to(room).emit('ready', {
+     socket.to(room).emit('ready', {
        white: getPlayerName(room, 'white'),
-       black: getPlayerName(room, 'black')  
+       black: getPlayerName(room, 'black')
      });
    });
 
