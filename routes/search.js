@@ -4,8 +4,11 @@ var express = require('express');
 var elasticsearch = require('elasticsearch');
 // Elasticsearchクライアントライブラリを読み込みます。
 
-var client = new elasticsearch.Client(); // default to localhost:9200
 // Elasticsearchクライアントを初期化します。デフォルトの設定では、localhostのポート9200に接続します。
+var config = require('config');
+var elasticsearch = require('elasticsearch');
+var connectionString = "http://"+config.get('chesshub.es.host')+":"+config.get('chesshub.es.port');
+var client = new elasticsearch.Client({ host: connectionString, log: 'trace' });
 
 var router = express.Router();
 // 新しいExpressルーターを作成します。
