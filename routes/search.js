@@ -1,75 +1,52 @@
 var express = require('express');
-const { defaultProvider } = require("@aws-sdk/credential-provider-node"); // V3 SDK
-const { Client } = require('@opensearch-project/opensearch');
-const { AwsSigv4Signer } = require('@opensearch-project/opensearch/aws');
+const OpenSearch = require('@opensearch-project/opensearch');
 
-const client = new Client({
- ...AwsSigv4Signer({
-   region: 'us-east-1', 
-   service: 'es',  
-   getCredentials: () => {
-     const credentialsProvider = defaultProvider();
-     return credentialsProvider();
-   },
- }),
- node: 'https://search-game-ws-q7zmcbu77egwwwobsncuukjwuq.us-east-1.es.amazonaws.com' 
+const client = new OpenSearch.Client({
+  node: 'https://search-game-ws-q7zmcbu77egwwwobsncuukjwuq.us-east-1.es.amazonaws.com',
+  auth: {
+    username: 'opensearch',
+    password: 'Opensearch0!'  
+  }
 });
 
-var router = express.Router();
-// 新しいExpressルーターを作成します。
+// Expressルーター
+const express = require('express');
+const router = express.Router();
 
-router.get('/', function(req, res) {
-    // 検索ページのGETリクエストのルートを定義します。
-    res.render('partials/search', {
-        // searchテンプレートをレンダリングします。
-        title: 'Chess Hub - Search',
-        user: req.user,
-        isSearchPage: true
-        // レンダリングに必要な変数を設定します。
-    });
+router.get('/', (req, res) => {
+  res.render('search'); 
 });
 
-router.post('/', function(req, res) {
-    // 検索フォームのPOSTリクエストのルートを定義します。
-    var white = req.body.white;
-    var black = req.body.black;
-    var content = req.body.content;
-    var result = req.body.result;
-    // リクエストから検索パラメータを取得します。
+router.post('/', (req, res) => {
 
-    client.search({
-        // Elasticsearchクライアントを使って検索を実行します。
-        index: 'chesshub',
-        type: 'game',
-        body: {
-            "query": {
-                "bool": {
-                    "should": [
-                        { "match": { "white":  white }},
-                        { "match": { "black": black }},
-                        { "match": { "content": content }},
-                        { "match": { "result": result }}
-                    ]
-                    // 検索クエリを定義します。white, black, content, resultフィールドでのマッチングを行います。
-                }
-            }
-        }
-    }).then(function (resp) {
-            var games = resp.hits.hits;
-            // 検索結果を取得します。
-            res.set('Content-Type', 'application/json');
-            // 応答のContent-TypeをJSONに設定します。
-            res.status(200);
-            // HTTPステータスコード200（OK）を設定します。
-            res.send({ games: games });
-            // 検索結果をJSON形式で送信します。
-        }, function (err) {
-            // 検索中にエラーが発生した場合。
-            res.status(500);
-            // HTTPステータスコード500（サーバーエラー）を設定します。
-            console.log(err);
-            // エラーをログに出力します。
-        });
+  const {white, black, content, result} = req.body;
+  
+  const query = {
+    query: {
+      bool: {
+        should: [
+          {match: {white}}, 
+          {match: {black}},
+          {match: {content}},
+          {match: {result}}
+        ]
+      }
+    }
+  };
+
+  client.search({
+    index: 'chesshub', 
+    body: query
+  })
+  .then(resp => {
+    const games = resp.hits.hits;
+    res.json({games}); 
+  })
+  .catch(err => {
+    console.error(err);
+    res.status(500).end();
+  });
+
 });
 
 module.exports = router;
