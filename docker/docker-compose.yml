@@ -54,8 +54,7 @@ services:
       - mongo:mongo
     depends_on:
       - mongo
-      - elasticsearch
-      # MongoDBとElasticsearchサービスに依存しています。
+      # MongoDBサービスに依存しています。
     restart: always
     # コンテナが停止した場合は常に再起動します。
 
