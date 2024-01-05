@@ -14,7 +14,6 @@ RUN npm install -g bower
 RUN bower install --allow-root
 RUN npm install @opensearch-project/opensearch@2.4.0
 
-
 ADD ./config/default.json config/default.json
 #ADD ./initData.js initData.js
 

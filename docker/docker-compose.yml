@@ -51,7 +51,7 @@ services:
       - 3000:3000
       # ホストのポート3000をコンテナのポート3000にマッピングします。
     links:
-      - mongo:mongo
+      - mongo
     depends_on:
       - mongo
       # MongoDBサービスに依存しています。
