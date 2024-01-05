@@ -16,24 +16,6 @@ var UserSchema = mongoose.Schema({
     // lastConnectionフィールドは、最後の接続日時を表す日付型で、デフォルト値は現在の日時です。
 });
 
-// モデルの定義
-const User = mongoose.model('User', UserSchema);
-
-// 非同期のメイン処理
-const main = async () => {
-
-  // ユーザー検索の非同期クエリ
-  const user = await User.findById(userId);
-
-  // ユーザー登録の非同期クエリ
-  const newUser = await User.create({
-    // データ
-  });
-
-};
-
-main();
-
 UserSchema.methods = {
     // UserSchemaにメソッドを追加します。
 
