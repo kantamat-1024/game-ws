@@ -14,7 +14,7 @@ var moment = require('moment');
 // 日付操作ライブラリであるmomentを読み込みます。
 
 /* GET user account details. */
-router.get('/', function(req, res) {
+router.get('/', async (req, res) => {
     // ユーザーアカウントの詳細を表示するためのGETリクエストのルートを定義します。
     res.render('partials/account', {
         // 'partials/account'テンプレートをレンダリングします。
@@ -34,7 +34,7 @@ router.get('/', function(req, res) {
 });
 
 /* Update user account. */
-router.post('/', function(req, res) {
+router.post('/', async (req, res) => {
     // ユーザーアカウントの更新を行うPOSTリクエストのルートを定義します。
     var User = mongoose.model('User');
     // Userモデルを取得します。

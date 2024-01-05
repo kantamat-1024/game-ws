@@ -16,8 +16,8 @@ var User = mongoose.model('User');
 var router = express.Router();
 // 新しいExpressルーターを作成します。
 
-router.get('/', function(req, res) {
-   // ホームページのルートを定義します。
+router.get('/', async (req, res) => {
+    // ホームページのルートを定義します。
    mongoose.model('Quote').find({}, function(err, quotes) {
         // すべての名言をデータベースから取得します。
         var randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
@@ -45,7 +45,7 @@ router.get('/', function(req, res) {
     });
 });
 
-router.get('/game/:token/:side', function(req, res) {
+router.get('/game/:token/:side', (req, res) => {
     // 特定のゲームを表示するルートを定義します。
     var token = req.params.token;
     var side = req.params.side;
@@ -60,7 +60,7 @@ router.get('/game/:token/:side', function(req, res) {
     });
 });
 
-router.get('/logout', function(req, res) {
+router.get('/logout', (req, res) => {
     // ログアウト処理のルートを定義します。
     req.logout();
     // Passportを使用してユーザーをログアウトします。

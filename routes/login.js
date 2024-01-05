@@ -32,19 +32,29 @@ router.get('/', function(req, res) {
     });
 });
 
-router.post('/',
-    passport.authenticate('local', { failureRedirect: '/login', failureFlash: true }),
-    // ログインフォームのPOSTリクエストを処理し、Passportで認証します。
-    function(req, res) {
-        // 認証に成功した後の処理。
-        User.findOneAndUpdate({_id: req.user._id}, { lastConnection: new Date() }, {}, function (err, user) {
-            // ユーザーの最終接続日時を更新します。
-            req.flash('welcomeMessage', 'Welcome ' + user.name + '!');
-            // 歓迎メッセージをフラッシュに設定します。
-            res.redirect('/');
-            // ホームページにリダイレクトします。
-        });
-    });
+// ログイン処理
+router.post('/', async (req, res, next) => {
 
-module.exports = router;
-// 定義したルーターをエクスポートします。
+    await passport.authenticate('local', {
+      successRedirect: '/',
+      failureRedirect: '/login', 
+      failureFlash: true 
+    });
+  
+    const user = await User.findById(req.user.id);
+  
+    await user.updateLastLogin();
+  
+    req.flash('message', `Welcome ${user.name}!`);
+  
+    res.redirect('/');
+  
+  });
+  
+  // Userモデルにメソッドを追加  
+  UserSchema.methods.updateLastLogin = async function() {
+    this.lastLogin = new Date();
+    await this.save();
+  }
+  
+  module.exports = router;

@@ -35,7 +35,7 @@ router.get('/', function(req, res) {
     });
 });
 
-router.post('/', function(req, res, next) {
+router.post('/', async (req, res) => {
     // ユーザー登録フォームのPOSTリクエストのルートを定義します。
     var email = req.body.email;
     var name = req.body.userName;
@@ -83,6 +83,17 @@ router.post('/', function(req, res, next) {
         }
     });
 });
+
+// Userモデルにメソッドを追加
+UserSchema.statics.register = async function(name, email, password) {
+
+    const encryptedPassword = await encryptPassword(password);
+  
+    const user = await this.create({ name, email, encryptedPassword });
+  
+    return user;
+  
+  }
 
 module.exports = router;
 // 定義したルーターをエクスポートします。

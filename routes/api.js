@@ -8,7 +8,7 @@ var router = express.Router();
 // 新しいExpressルーターを作成します。
 
 /* display game. */
-router.get('/game/:id', function(req, res) {
+router.get('/game/:id', async (req, res) => {
     // 特定のゲームを取得するためのGETリクエストのルートを定義します。
     var id = req.params.id;
     // リクエストからゲームIDを取得します。
@@ -29,7 +29,7 @@ router.get('/game/:id', function(req, res) {
 });
 
 /* display user. */
-router.get('/user/:name', function(req, res) {
+router.get('/user/:name', async (req, res) => {
     // 特定のユーザーを取得するためのGETリクエストのルートを定義します。
     var name = req.params.name;
     // リクエストからユーザー名を取得します。
@@ -55,7 +55,7 @@ router.get('/user/:name', function(req, res) {
 });
 
 /* api status, for monitor */
-router.get('/', function(req, res) {
+router.get('/', (req, res) => {
     // APIのステータスをチェックするためのGETリクエストのルートを定義します。
     res.status(200).end();
     // 正常に動作していることを示すために200（成功）を返します。

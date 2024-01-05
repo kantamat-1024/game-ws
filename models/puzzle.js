@@ -11,5 +11,12 @@ var PuzzleSchema = mongoose.Schema({
     // commentフィールドは、パズルに対する追加的なコメントや説明を表す文字列です。
 });
 
-mongoose.model('Puzzle', PuzzleSchema);
-// 定義したスキーマ（PuzzleSchema）を使用して、'Puzzle'という名前のモデルを作成し、mongooseに登録します。
+// モデルの定義
+const Puzzle = mongoose.model('Puzzle', PuzzleSchema);
+
+// 非同期のクエリ
+const main = async () => {
+  const puzzles = await Puzzle.find({});
+} 
+
+main();

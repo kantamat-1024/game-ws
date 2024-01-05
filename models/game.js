@@ -1,7 +1,7 @@
 var mongoose = require('mongoose')
 // mongooseモジュール（MongoDBのためのODM）を読み込みます。
 
-, Schema = mongoose.Schema;
+Schema = mongoose.Schema;
 // mongooseからSchemaコンストラクタを参照します。
 
 var GameSchema = mongoose.Schema({
@@ -18,5 +18,12 @@ var GameSchema = mongoose.Schema({
     // resultフィールドは、ゲームの結果を格納するための文字列型です。
 });
 
-mongoose.model('Game', GameSchema);
-// 定義したスキーマを使って'Game'という名前のモデルを作成し、mongooseに登録します。
+const Game = mongoose.model('Game', GameSchema);
+
+// モデルのクエリを非同期に
+const main = async () => {
+  const games = await Game.find({});
+  // gamesを利用する
+}
+
+main();

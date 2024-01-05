@@ -7,22 +7,32 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var mongoose = require('mongoose');
 var passport = require('passport');
 var flash = require('connect-flash');
+const mongoose = require('mongoose');
 
-var env = process.env.NODE_ENV || 'default';
-var config = require('config');
+// Expressアプリケーション作成
+const app = express(); 
 
-var app = express();
+// データベース接続 
+mongoose.connect(url)
+  .then(() => {
+    // モデル定義
+    const Game = mongoose.model('Game', GameSchema);
 
-// configure database
-require('./config/database')(app, mongoose);
+    // サーバーの定義
+    const server = http.createServer(app);
 
-// bootstrap data models
-fs.readdirSync(__dirname + '/models').forEach(function (file) {
-    if (~file.indexOf('.js')) require(__dirname + '/models/' + file);
-});
+    // サーバー起動時に接続を待機
+    server.listen(3000, async() => {
+      await mongoose.connection;
+      console.log('Server listening on port 3000');
+    });
+
+  })
+  .catch(err => {
+    console.error(err);
+  });
 
 // configure express app
 app.set('views', path.join(__dirname, 'views'));
@@ -59,13 +69,20 @@ app.use('/search', search);
 // configure error handlers
 require('./config/errorHandlers.js')(app);
 
-// HTTPサーバーを作成
-var server = http.createServer(app);
-require('./config/socket.js')(server);
+// ルートハンドラを非同期に
+app.get('/', async (req, res) => {
+    const games = await Game.find({});
+    res.render('index', {games}); 
+  });
+  
+  // モデルのクエリをPromiseベースに
+  Game.find({})
+    .then(games => {
+      // gamesを利用
+    })
+    .catch(err => {
+      console.error(err); 
+    });
 
-// サーバーをポート3000でリッスン
-server.listen(3000, function() {
-    console.log('Server listening on port 3000');
-});
 
 module.exports = app;
