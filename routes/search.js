@@ -1,4 +1,4 @@
-var express = require('express');
+const express = require('express');
 const OpenSearch = require('@opensearch-project/opensearch');
 
 const client = new OpenSearch.Client({
@@ -10,7 +10,6 @@ const client = new OpenSearch.Client({
 });
 
 // Expressルーター
-const express = require('express');
 const router = express.Router();
 
 router.get('/', (req, res) => {
