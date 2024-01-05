@@ -51,7 +51,6 @@ services:
       - 3000:3000
       # ホストのポート3000をコンテナのポート3000にマッピングします。
     links:
-      - elasticsearch:elasticsearch
       - mongo:mongo
     depends_on:
       - mongo
@@ -59,10 +58,4 @@ services:
       # MongoDBとElasticsearchサービスに依存しています。
     restart: always
     # コンテナが停止した場合は常に再起動します。
-volumes:
-  esdata:
-    driver: local
-    driver_opts:
-      type: none
-      device: /var/lib/elasticsearch-data
-      o: bind
+
