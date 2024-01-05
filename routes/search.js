@@ -4,7 +4,7 @@ var opensearch = require('@opensearch-project/opensearch');
 
 // OpenSearchに接続する設定
 var client = new opensearch.Client({
-    node: 'https://search-game-ws-q7zmcbu77egwwwobsncuukjwuq.us-east-1.es.amazonaws.com',    
+    nodes: 'https://search-game-ws-q7zmcbu77egwwwobsncuukjwuq.us-east-1.es.amazonaws.com',    
     auth: {
         username: 'opensearch',
         password: 'Opensearch0!'
