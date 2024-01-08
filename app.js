@@ -14,25 +14,8 @@ const mongoose = require('mongoose');
 // Expressアプリケーション作成
 const app = express(); 
 
-// データベース接続 
-mongoose.connect(url)
-  .then(() => {
-    // モデル定義
-    const Game = mongoose.model('Game', GameSchema);
-
-    // サーバーの定義
-    const server = http.createServer(app);
-
-    // サーバー起動時に接続を待機
-    server.listen(3000, async() => {
-      await mongoose.connection;
-      console.log('Server listening on port 3000');
-    });
-
-  })
-  .catch(err => {
-    console.error(err);
-  });
+// MongoDB接続設定をインポート
+const db = require('./config/mongodb.js');
 
 // configure express app
 app.set('views', path.join(__dirname, 'views'));
@@ -69,20 +52,22 @@ app.use('/search', search);
 // configure error handlers
 require('./config/errorHandlers.js')(app);
 
-// ルートハンドラを非同期に
-app.get('/', async (req, res) => {
-    const games = await Game.find({});
-    res.render('index', {games}); 
+// Promiseベースの非同期処理
+app.get('/', (req, res) => {
+    Game.find({})
+      .then(games => {
+        res.render('index', {games});  
+      })
+      .catch(err => {
+        console.error(err);
+        res.status(500).send('Error fetching games');
+      });
   });
-  
-  // モデルのクエリをPromiseベースに
-  Game.find({})
-    .then(games => {
-      // gamesを利用
-    })
-    .catch(err => {
-      console.error(err); 
-    });
 
+// エラーハンドリング
+app.use((err, req, res, next) => {
+    console.error(err);
+    res.status(500).send('Internal Server Error'); 
+  });
 
 module.exports = app;
