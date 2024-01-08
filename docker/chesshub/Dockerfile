@@ -15,5 +15,6 @@ RUN npm install @opensearch-project/opensearch@2.4.0
 
 #ADD ./config/default.json config/default.json
 #ADD ./initData.js initData.js
+
 EXPOSE 3000
 CMD ["sh", "-c", "node initData.js && node ."]
