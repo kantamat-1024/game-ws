@@ -1,33 +1,20 @@
-version: "3.9"
-# Docker Composeのファイルフォーマットバージョンを指定します。
+version: "3.9" 
 
 services:
-  # 複数のサービス（コンテナ）を定義します。
-
   mongo:
-    image: mongo:latest
-    # MongoDBの公式イメージ（バージョン4.4）を使用します。
+    image: mongo:lasted
     ports:
       - 27017:27017
-      # ホストのポート27017をコンテナのポート27017にマッピングします。
     volumes:
       - /data/db:/data/db
-      # ホストのデータディレクトリをコンテナのデータディレクトリにマウントします。
     restart: always
-    # コンテナが停止した場合は常に再起動します。
 
   chesshub:
-    build:
-      context: ./chesshub
-      # チェスハブアプリケーションのDockerfileがあるディレクトリを指定します。
+    build: ./chesshub 
     ports:
       - 3000:3000
-      # ホストのポート3000をコンテナのポート3000にマッピングします。
-    links:
-      - mongo
+    environment:
+      - MONGO_URL=mongodb://mongo:27017/chesshub
     depends_on:
       - mongo
-      # MongoDBサービスに依存しています。
     restart: always
-    # コンテナが停止した場合は常に再起動します。
-

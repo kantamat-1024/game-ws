@@ -1,6 +1,7 @@
 FROM node:18.12.0
 
 ENV GITHUB_REPO=https://github.com/kantamat-1024/game-ws.git
+ENV MONGO_URL=mongodb://mongo:27017/chesshub
 
 RUN mkdir -p /var/www/app
 WORKDIR /var/www/app
@@ -13,6 +14,7 @@ RUN npm install
 RUN npm install -g bower
 RUN bower install --allow-root
 RUN npm install @opensearch-project/opensearch@2.4.0
+
 
 ADD ./config/default.json config/default.json
 #ADD ./initData.js initData.js

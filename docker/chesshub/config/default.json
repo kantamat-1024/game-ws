@@ -1,5 +1,0 @@
-{
-  "chesshub": {
-    "db": "mongodb://mongo:27017/test"
-  }
-}
