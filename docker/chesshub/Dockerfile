@@ -4,9 +4,9 @@ ENV MONGO_URL=mongodb://mongo:27017/chesshub
 RUN mkdir -p /var/www/app
 WORKDIR /var/www/app
 
-#RUN apt-get update && apt-get install -y git
-#RUN git clone -b feature/opensearch $GITHUB_REPO .
-COPY ./package.json ./package-lock.json ./
+RUN apt-get update && apt-get install -y git
+RUN git clone -b feature/opensearch $GITHUB_REPO .
+
 RUN apt-get install -y iputils-ping
 RUN npm install
 RUN npm install -g bower
