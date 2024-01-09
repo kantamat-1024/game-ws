@@ -1,5 +1,10 @@
 {
-  "chesshub": {
-    "db": "mongodb://mongo:27017/test"
+  "chesshub": { 
+    "db": "mongodb://mongo:27017/chesshub",
+    "poolSize": 50,
+    "socketTimeoutMS": 30000,
+    "connectTimeoutMS": 30000,
+    "reconnectTries": 30,
+    "reconnectInterval": 1000
   }
 }
