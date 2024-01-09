@@ -15,7 +15,7 @@ const mongoose = require('mongoose');
 const app = express(); 
 
 // MongoDB接続設定をインポート
-const db = require('./config/mongodb.js');
+const db = require('./config/database.js');
 
 // configure express app
 app.set('views', path.join(__dirname, 'views'));

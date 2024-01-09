@@ -1,3 +1,4 @@
+//OpenSearchの設定用
 const OpenSearch = require('@opensearch-project/opensearch');
 
 const client = new OpenSearch.Client({

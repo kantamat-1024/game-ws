@@ -9,7 +9,12 @@ module.exports = function (app, mongoose) {
         // 接続オプションを定義します。`useNewUrlParser` と `useUnifiedTopology` は、接続の警告を避けるために推奨されるオプションです。
         var options = {
             useNewUrlParser: true,
-            useUnifiedTopology: true
+            useUnifiedTopology: true,
+            poolSize: 50,
+            socketTimeoutMS: 30000, 
+            connectTimeoutMS: 30000,
+            reconnectTries: 30, // リトライ回数
+            reconnectInterval: 1000 // リトライ間隔(ミリ秒)
         };
         // mongooseを使用してMongoDBに接続します。接続情報は `config` モジュールから取得されます。
         mongoose.connect(config.get('chesshub.db'), options);
