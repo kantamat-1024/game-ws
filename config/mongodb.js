@@ -12,13 +12,13 @@ const options = {
 };
 
 // 接続処理
-mongoose.connect(config.mongodb.db, options); 
+mongoose.connect(config.mongodb.uri, options); 
 
 // リトライロジック
 mongoose.connection.on('disconnected', () => {
   console.log('MongoDB disconnected. Retrying connection...');
   setTimeout(() => {
-    mongoose.connect(config.mongodb.db, options);
+    mongoose.connect(config.mongodb.uri, options);
   }, options.reconnectInterval);
 });
 
