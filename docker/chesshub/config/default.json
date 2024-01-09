@@ -1,7 +1,6 @@
 {
   "chesshub": { 
-    "uri": "mongodb://mongo:27017/chesshub",
-    "db": "chesshub",
+    "db": "mongodb://mongo:27017/chesshub",
     "poolSize": 50,
     "socketTimeoutMS": 30000,
     "connectTimeoutMS": 30000,
